@@ -1,0 +1,27 @@
+# Downloaded files
+downloads/
+browser_downloads/
+
+# User config (contains passwords and preferences)
+download_config.json
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
