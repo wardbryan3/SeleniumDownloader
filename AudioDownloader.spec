@@ -6,6 +6,7 @@ a = Analysis(
     pathex=[os.path.dirname(os.path.abspath(SPEC))],
     binaries=[],
     datas=[],
+    collect_all=['selenium', 'webdriver_manager'],
     hiddenimports=[
         'gui',
         'config',
