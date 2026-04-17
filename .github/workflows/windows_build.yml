@@ -28,7 +28,7 @@ jobs:
 
       - name: Build with PyInstaller using .spec file
         run: |
-          pyinstaller --clean --collect-all selenium --collect-all webdriver_manager AudioDownloader.spec
+          pyinstaller --clean AudioDownloader.spec
 
       - name: Upload executable artifact
         uses: actions/upload-artifact@v4
