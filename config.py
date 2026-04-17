@@ -239,6 +239,10 @@ class ConfigManager:
         """Get a configuration value"""
         return self.config.get(key, default)
     
+    def save(self) -> bool:
+        """Save configuration to file (alias for save_config)"""
+        return self.save_config()
+    
     def update(self, updates: Dict[str, Any]):
         """Update configuration with new values"""
         self.config.update(updates)
