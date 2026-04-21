@@ -14,6 +14,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from webdriver_manager.firefox import GeckoDriverManager
 
+from constants import ALLOWED_EXTENSIONS, EXCLUDED_EXTENSIONS, EXCLUDED_PREFIXES
+
 logger = logging.getLogger(__name__)
 
 class BrowserManager:
@@ -161,10 +163,6 @@ class BrowserManager:
         """
         import time
         download_dir = Path(self._get_temp_download_dir())
-        
-        allowed_extensions = {'.zip', '.mp3', '.wav', '.pdf', '.rar', '.7z', '.tar', '.gz'}
-        excluded_extensions = {'.part', '.crdownload', '.tmp', '.download', '.xpi', '.so', '.lock'}
-        excluded_prefixes = {'.fea', '.X'}  # Firefox temp files
         
         start_time = time.time()
         checked_files = set()

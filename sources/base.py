@@ -11,6 +11,8 @@ from pathlib import Path
 
 from selenium.webdriver.common.by import By
 
+from constants import ALLOWED_EXTENSIONS, EXCLUDED_EXTENSIONS, EXCLUDED_PREFIXES
+
 logger = logging.getLogger(__name__)
 
 class BaseDownloader(ABC):
@@ -85,9 +87,7 @@ class BaseDownloader(ABC):
         logger.info(f"Download directory: {download_dir}")
         logger.info(f"Timeout: {timeout}s")
         
-        allowed_extensions = {'.zip', '.mp3', '.wav', '.pdf', '.rar', '.7z', '.tar', '.gz'}
-        excluded_extensions = {'.part', '.crdownload', '.tmp', '.download', '.xpi', '.so', '.lock'}
-        excluded_prefixes = {'.fea', '.X'}
+
         
         start_time = time.time()
         known_files = {}

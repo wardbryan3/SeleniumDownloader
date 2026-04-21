@@ -33,7 +33,12 @@ class ClearOutWestDownloader(BaseDownloader):
                 logger.error("Failed to get driver")
                 return False
             
-            password = self.config_manager.get("cow_password", "coughingmilkcow")
+            password = self.config_manager.get("cow_password")
+            if not password:
+                logger.error("cow_password not configured in download_config.json")
+                if update_callback:
+                    update_callback(100, "Error: cow_password not configured")
+                return False
             
             if update_callback:
                 update_callback(5, "Accessing website...")
@@ -109,7 +114,16 @@ class ClearOutWestDownloader(BaseDownloader):
                 time.sleep(2)
                 
                 filename = href.split('/')[-1]
+                
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.TAG_NAME, "body"))
+                )
+                time.sleep(1)
+                
                 link_xpath = f"//a[contains(@href, '{filename}')]"
+                WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, link_xpath))
+                )
                 link = driver.find_element(By.XPATH, link_xpath)
                 driver.execute_script("arguments[0].click();", link)
                 logger.info(f"Clicked link {index}")

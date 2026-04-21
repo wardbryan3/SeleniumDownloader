@@ -66,28 +66,30 @@ def run_cli_downloads():
     
     results = {}
     
-    for source_name in DOWNLOAD_SOURCES.keys():
-        logger.info("")
-        logger.info(f"--- Downloading from: {source_name} ---")
-        
-        config.clear_browser_download_dir()
-        
-        browser_manager = BrowserManager(config)
-        downloader = create_downloader(source_name, browser_manager, config)
-        
-        try:
-            success = downloader.download()
-            results[source_name] = success
+    browser_manager = BrowserManager(config)
+    
+    try:
+        for source_name in DOWNLOAD_SOURCES.keys():
+            logger.info("")
+            logger.info(f"--- Downloading from: {source_name} ---")
             
-            if success:
-                logger.info(f"✓ {source_name}: SUCCESS")
-            else:
-                logger.error(f"✗ {source_name}: FAILED")
-        except Exception as e:
-            logger.error(f"✗ {source_name}: ERROR - {e}")
-            results[source_name] = False
-        finally:
-            browser_manager.close_browser()
+            config.clear_browser_download_dir()
+            
+            downloader = create_downloader(source_name, browser_manager, config)
+            
+            try:
+                success = downloader.download()
+                results[source_name] = success
+                
+                if success:
+                    logger.info(f"✓ {source_name}: SUCCESS")
+                else:
+                    logger.error(f"✗ {source_name}: FAILED")
+            except Exception as e:
+                logger.error(f"✗ {source_name}: ERROR - {e}")
+                results[source_name] = False
+    finally:
+        browser_manager.close_browser()
     
     logger.info("")
     logger.info("=" * 50)
