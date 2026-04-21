@@ -110,14 +110,14 @@ class WestwoodOneDownloader(BaseDownloader):
                 )
                 time.sleep(1)
                 send_button.click()
-                logger.info("Magic link requested, waiting 60 seconds for email to arrive...")
+                logger.info("Magic link requested, waiting 20 seconds for email to arrive...")
             except Exception as e:
                 logger.error(f"Could not find or click send button: {e}")
                 if update_callback:
                     update_callback(100, f"Error: Could not click send button")
                 return False
             
-            time.sleep(60)
+            time.sleep(20)
             
             if update_callback:
                 update_callback(30, "Accessing email...")

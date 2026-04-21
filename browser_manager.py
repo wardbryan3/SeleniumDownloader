@@ -201,9 +201,9 @@ class BrowserManager:
                 try:
                     size = f.stat().st_size
                     if size > 0 and f.name not in checked_files:
-                        has_excluded_ext = any(f.name.endswith(ext) for ext in excluded_extensions)
-                        has_excluded_prefix = any(f.name.startswith(prefix) for prefix in excluded_prefixes)
-                        has_allowed_ext = any(f.name.lower().endswith(ext) for ext in allowed_extensions)
+                        has_excluded_ext = any(f.name.endswith(ext) for ext in EXCLUDED_EXTENSIONS)
+                        has_excluded_prefix = any(f.name.startswith(prefix) for prefix in EXCLUDED_PREFIXES)
+                        has_allowed_ext = any(f.name.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS)
                         
                         if has_excluded_ext or has_excluded_prefix:
                             logger.debug(f"Ignoring system/temp file: {f.name}")
