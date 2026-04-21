@@ -100,10 +100,13 @@ class ConfigManager:
     @staticmethod
     def load_config() -> Dict[str, Any]:
         """Load configuration from file or return defaults"""
+        logger.info(f"Loading config from: {CONFIG_FILE}")
         try:
             if os.path.exists(CONFIG_FILE):
+                logger.info("Config file exists, loading...")
                 with open(CONFIG_FILE, 'r') as f:
                     saved_config = json.load(f)
+                    logger.info(f"Saved config URLs: {saved_config.get('urls', {})}")
                     merged_config = DEFAULT_CONFIG.copy()
                     merged_config.update(saved_config)
                     logger.info("Configuration loaded successfully")

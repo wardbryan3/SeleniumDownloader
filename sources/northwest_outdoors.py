@@ -38,9 +38,12 @@ class NorthwestOutdoorsDownloader(BaseDownloader):
                 update_callback(5, "Accessing download page...")
             
             logger.info("Navigating to Dropbox URL...")
-            url = self.config_manager.get("urls", {}).get("northwest_outdoors")
-            if not url or "YOUR_LINK" in url:
-                logger.error("northwest_outdoors URL not configured in download_config.json")
+            all_urls = self.config_manager.get("urls", {})
+            logger.info(f"All URLs from config: {all_urls}")
+            url = all_urls.get("northwest_outdoors")
+            logger.info(f"URL from config: [{url}]")
+            if not url or "YOUR_LINK" in url or "REMOVED" in url:
+                logger.error(f"northwest_outdoors URL not configured properly in download_config.json: {url}")
                 if update_callback:
                     update_callback(100, "Error: northwest_outdoors URL not configured")
                 return False
