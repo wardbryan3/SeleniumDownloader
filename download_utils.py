@@ -481,6 +481,15 @@ class DownloadUtilities:
         output_path = Path(output_file)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
+        logger.info(f"FFmpeg: promo_file = {promo_file}")
+        logger.info(f"FFmpeg: tag_file = {tag_file}")
+        logger.info(f"FFmpeg: output_file = {output_file}")
+        
+        promo_exists = Path(promo_file).exists()
+        tag_exists = Path(tag_file).exists()
+        logger.info(f"FFmpeg: promo exists = {promo_exists}")
+        logger.info(f"FFmpeg: tag exists = {tag_exists}")
+        
         ffmpeg_cmd = [
             'ffmpeg', '-y',
             '-i', promo_file,
@@ -528,14 +537,18 @@ class DownloadUtilities:
         ]
         
         try:
+            logger.info(f"FFmpeg: running command: {' '.join(cmd)}")
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
             
             if result.returncode == 0 and output_path.exists():
                 logger.info(f"Successfully created: {output_file}")
                 return True
             else:
+                logger.error(f"FFmpeg returncode: {result.returncode}")
                 if result.stderr:
-                    logger.error(f"FFmpeg error: {result.stderr[:500]}")
+                    logger.error(f"FFmpeg stderr: {result.stderr[:1000]}")
+                if result.stdout:
+                    logger.info(f"FFmpeg stdout: {result.stdout[:500]}")
                 return False
                 
         except subprocess.TimeoutExpired:
