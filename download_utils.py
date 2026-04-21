@@ -529,9 +529,7 @@ class DownloadUtilities:
             '-i', f'"{promo_file}"',
             '-i', f'"{tag_file}"',
             '-filter_complex',
-            f'[0:a]aformat=sample_fmts=s16:channel_layouts=stereo,fade=t=out:st=0:d=0.5[promo_out];'
-            f'[1:a]aformat=sample_fmts=s16:channel_layouts=stereo[tag];'
-            f'[promo_out][tag]amix=inputs=2:duration=first:normalize=0[out]',
+            'amix=inputs=2:duration=first:normalize=0[out]',
             '-map', '[out]',
             f'"{output_path}"'
         ]
