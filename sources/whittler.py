@@ -39,7 +39,13 @@ class WhittlerDownloader(BaseDownloader):
                 update_callback(5, "Accessing download page...")
             
             logger.info("Navigating to Dropbox URL...")
-            driver.get("https://www.dropbox.com/scl/fo/r4afn2y51ev2nusph34be/h?rlkey=ueifwwp5henj0tcbdrh2z78tc&st=ewyr7uik&dl=0")
+            url = self.config_manager.get("urls", {}).get("whittler")
+            if not url or "YOUR_LINK" in url:
+                logger.error("whittler URL not configured in download_config.json")
+                if update_callback:
+                    update_callback(100, "Error: whittler URL not configured")
+                return False
+            driver.get(url)
             
             logger.info("Waiting for page to load...")
             time.sleep(10)

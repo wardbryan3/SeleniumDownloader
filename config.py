@@ -58,7 +58,11 @@ DEFAULT_CONFIG = {
     "retry_attempts": 2,
     "email": "",
     "password": "",
-    "cow_password": "coughingmilkcow",
+    "cow_password": "",
+    "urls": {
+        "northwest_outdoors": "https://www.dropbox.com/scl/fo/YOUR_LINK_HERE",
+        "whittler": "https://www.dropbox.com/scl/fo/YOUR_LINK_HERE"
+    },
     "scheduled_downloads": {
         "enabled": False,
         "schedule_type": "daily",
@@ -238,6 +242,10 @@ class ConfigManager:
     def get(self, key: str, default: Any = None) -> Any:
         """Get a configuration value"""
         return self.config.get(key, default)
+    
+    def set(self, key: str, value: Any):
+        """Set a single configuration value"""
+        self.config[key] = value
     
     def save(self) -> bool:
         """Save configuration to file (alias for save_config)"""

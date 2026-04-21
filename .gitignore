@@ -25,3 +25,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Test scripts
+test_config.py

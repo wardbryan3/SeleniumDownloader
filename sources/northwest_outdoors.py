@@ -38,7 +38,13 @@ class NorthwestOutdoorsDownloader(BaseDownloader):
                 update_callback(5, "Accessing download page...")
             
             logger.info("Navigating to Dropbox URL...")
-            driver.get("https://www.dropbox.com/scl/fo/msp1ouz0bh0kyhoi6m0rb/ANM_rYPoVJEMjEfbJ8FnHOQ?e=2&rlkey=bmpuqryng1r7lkr717e2a856k")
+            url = self.config_manager.get("urls", {}).get("northwest_outdoors")
+            if not url or "YOUR_LINK" in url:
+                logger.error("northwest_outdoors URL not configured in download_config.json")
+                if update_callback:
+                    update_callback(100, "Error: northwest_outdoors URL not configured")
+                return False
+            driver.get(url)
             
             logger.info("Waiting for page to load...")
             time.sleep(10)
