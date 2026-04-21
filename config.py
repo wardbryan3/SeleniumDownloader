@@ -275,6 +275,9 @@ class ConfigManager:
     def get_tag_file(self) -> str:
         """Get the audio tag file path (test or production)"""
         if self.is_test_mode():
+            config_tag_file = self.config.get("tag_file")
+            if config_tag_file:
+                return config_tag_file
             tag_name = Path(TAG_FILE_PATH).name
             return os.path.join(self.get_promos_dir(), tag_name)
         return self.config.get("tag_file", TAG_FILE_PATH)
