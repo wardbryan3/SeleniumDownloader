@@ -28,3 +28,7 @@ Thumbs.db
 
 # Test scripts
 test_config.py
+
+# Build artifacts
+build/
+dist/
