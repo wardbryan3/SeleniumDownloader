@@ -29,7 +29,7 @@ class TestSchedulerParsing:
         for full, short in expected_mappings.items():
             actual = DAY_MAPPING.get(full)
             assert actual == short, f"{full}: expected {short}, got {actual}"
-            print(f"  ✓ {full} -> {actual}")
+            print(f"  [PASS] {full} -> {actual}")
 
     def test_time_format_validation(self):
         """Test time format validation using datetime.strptime"""
@@ -39,7 +39,7 @@ class TestSchedulerParsing:
         for time_str in valid_times:
             try:
                 datetime.strptime(time_str, '%H:%M')
-                print(f"  ✓ {time_str} is valid")
+                print(f"  [PASS] {time_str} is valid")
             except ValueError:
                 assert False, f"{time_str} should be valid"
 
@@ -54,7 +54,7 @@ class TestSchedulerParsing:
                 except ValueError:
                     is_invalid = True
             assert is_invalid, f"{time_str} should be invalid"
-            print(f"  ✓ {time_str} correctly rejected")
+            print(f"  [PASS] {time_str} correctly rejected")
 
     def test_schedule_types(self):
         """Test different schedule types used in scheduler"""
@@ -62,7 +62,7 @@ class TestSchedulerParsing:
 
         for schedule_type in valid_schedule_types:
             assert schedule_type in valid_schedule_types
-            print(f"  ✓ Schedule type '{schedule_type}' is valid")
+            print(f"  [PASS] Schedule type '{schedule_type}' is valid")
 
     def test_day_list_validation(self):
         """Test day list validation"""
@@ -99,7 +99,7 @@ class TestSchedulerExecution:
             else:
                 expected = now.replace(hour=target_time.hour, minute=target_time.minute) + timedelta(days=1)
 
-            print(f"  ✓ Next run for {target_time}: {expected.strftime('%H:%M')}")
+            print(f"  [PASS] Next run for {target_time}: {expected.strftime('%H:%M')}")
 
     def test_schedule_enabled_check(self):
         """Test schedule enabled/disabled logic"""
@@ -114,7 +114,7 @@ class TestSchedulerExecution:
 
         is_enabled = schedule.get("enabled", False)
         assert is_enabled, "Schedule should be enabled"
-        print("  ✓ Schedule enabled check works")
+        print("  [PASS] Schedule enabled check works")
 
     def test_selected_sources_handling(self):
         """Test selected sources vs download_all flag"""
@@ -131,7 +131,7 @@ class TestSchedulerExecution:
                 result = schedule.get("selected_sources", [])
 
             assert result == expected, f"Expected {expected}, got {result}"
-            print(f"  ✓ download_all={schedule.get('download_all')} -> {result}")
+            print(f"  [PASS] download_all={schedule.get('download_all')} -> {result}")
 
 
 class TestSchedulerIntegration:
@@ -147,7 +147,7 @@ class TestSchedulerIntegration:
         for key in required_keys:
             assert key in scheduled, f"Missing key: {key}"
 
-        print(f"  ✓ Scheduled config has all required keys: {list(scheduled.keys())}")
+        print(f"  [PASS] Scheduled config has all required keys: {list(scheduled.keys())}")
 
     def test_scheduled_config_defaults(self):
         """Test scheduled_downloads default values"""
@@ -162,7 +162,7 @@ class TestSchedulerIntegration:
         assert scheduled.get("download_all") == True
         assert scheduled.get("selected_sources") == []
 
-        print("  ✓ Scheduled config defaults are correct")
+        print("  [PASS] Scheduled config defaults are correct")
 
     def test_get_scheduled_config_method(self):
         """Test ConfigManager.get_scheduled_config method"""
@@ -174,7 +174,7 @@ class TestSchedulerIntegration:
 
             assert isinstance(scheduled, dict), "Should return dict"
             assert "enabled" in scheduled, "Should have enabled key"
-            print(f"  ✓ get_scheduled_config returns: {list(scheduled.keys())}")
+            print(f"  [PASS] get_scheduled_config returns: {list(scheduled.keys())}")
         except Exception as e:
             print(f"  Note: {e}")
 
@@ -205,10 +205,10 @@ def run_tests():
             test()
             passed += 1
         except AssertionError as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
         except Exception as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
 
     print("=" * 60)

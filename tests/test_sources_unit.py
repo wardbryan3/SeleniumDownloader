@@ -36,7 +36,7 @@ def test_melinda_myers_url_validation_valid():
 
     downloader = MelindaMyersDownloader(mock_bm, cm)
     assert downloader is not None, "Should create MelindaMyersDownloader"
-    print("  ✓ MelindaMyersDownloader instantiates correctly")
+    print("  [PASS] MelindaMyersDownloader instantiates correctly")
 
 
 def test_melinda_myers_download_browser_failure():
@@ -51,7 +51,7 @@ def test_melinda_myers_download_browser_failure():
     with patch.object(downloader, 'wait_for_download_and_get_file', return_value=None):
         result = downloader.download()
         assert result is False, "Should return False when browser fails"
-        print("  ✓ Melinda Myers returns False when browser start fails")
+        print("  [PASS] Melinda Myers returns False when browser start fails")
 
 
 def test_northwest_outdoors_url_validation():
@@ -64,10 +64,10 @@ def test_northwest_outdoors_url_validation():
     is_valid = bool(url) and "YOUR_LINK" not in url and "REMOVED" not in url
     if url and "YOUR_LINK" not in url:
         assert is_valid, f"URL should be valid: {url}"
-        print(f"  ✓ Northwest Outdoors has valid URL")
+        print(f"  [PASS] Northwest Outdoors has valid URL")
     else:
         assert not is_valid, "Placeholder URL should be invalid"
-        print("  ✓ Northwest Outdoors correctly has invalid placeholder URL")
+        print("  [PASS] Northwest Outdoors correctly has invalid placeholder URL")
 
 
 def test_northwest_outdoors_download_browser_failure():
@@ -81,7 +81,7 @@ def test_northwest_outdoors_download_browser_failure():
 
     result = downloader.download()
     assert result is False, "Should return False when browser fails"
-    print("  ✓ Northwest Outdoors returns False when browser start fails")
+    print("  [PASS] Northwest Outdoors returns False when browser start fails")
 
 
 def test_whittler_url_validation():
@@ -92,10 +92,10 @@ def test_whittler_url_validation():
     is_valid = bool(url) and "YOUR_LINK" not in url and "REMOVED" not in url
     if url and "YOUR_LINK" not in url:
         assert is_valid, f"URL should be valid: {url}"
-        print(f"  ✓ Whittler has valid URL")
+        print(f"  [PASS] Whittler has valid URL")
     else:
         assert not is_valid, "Placeholder URL should be invalid"
-        print("  ✓ Whittler correctly has invalid placeholder URL")
+        print("  [PASS] Whittler correctly has invalid placeholder URL")
 
 
 def test_whittler_download_browser_failure():
@@ -109,7 +109,7 @@ def test_whittler_download_browser_failure():
 
     result = downloader.download()
     assert result is False, "Should return False when browser fails"
-    print("  ✓ Whittler returns False when browser start fails")
+    print("  [PASS] Whittler returns False when browser start fails")
 
 
 def test_westwood_one_requires_credentials():
@@ -126,7 +126,7 @@ def test_westwood_one_requires_credentials():
 
     result = downloader.download()
     assert result is False, "Should return False without credentials"
-    print("  ✓ Westwood One returns False without email/password")
+    print("  [PASS] Westwood One returns False without email/password")
 
 
 def test_westwood_one_with_credentials():
@@ -146,7 +146,7 @@ def test_westwood_one_with_credentials():
     with patch.object(downloader, 'wait_for_download_and_get_file', return_value="/tmp/test.mp3"):
         result = downloader.download()
         # It may return True or may fail on other steps, but should not fail on credentials
-        print(f"  ✓ Westwood One with credentials returned: {result}")
+        print(f"  [PASS] Westwood One with credentials returned: {result}")
 
 
 def test_clear_out_west_requires_password():
@@ -162,7 +162,7 @@ def test_clear_out_west_requires_password():
 
     result = downloader.download()
     assert result is False, "Should return False without cow_password"
-    print("  ✓ Clear Out West returns False without cow_password")
+    print("  [PASS] Clear Out West returns False without cow_password")
 
 
 def test_clear_out_west_with_password():
@@ -181,7 +181,7 @@ def test_clear_out_west_with_password():
     with patch.object(downloader, 'wait_for_download_and_get_file', return_value="/tmp/test.mp3"):
         result = downloader.download()
         # Should proceed past the password check
-        print(f"  ✓ Clear Out West with password returned: {result}")
+        print(f"  [PASS] Clear Out West with password returned: {result}")
 
 
 def test_all_sources_in_factory():
@@ -199,7 +199,7 @@ def test_all_sources_in_factory():
         except Exception as e:
             print(f"  Note: Could not create {display_name}: {e}")
             continue
-    print(f"  ✓ All sources available via factory: {list(DOWNLOAD_SOURCES.keys())}")
+    print(f"  [PASS] All sources available via factory: {list(DOWNLOAD_SOURCES.keys())}")
 
 
 def test_should_auto_close_browser():
@@ -212,7 +212,7 @@ def test_should_auto_close_browser():
     downloader = MelindaMyersDownloader(mock_bm, cm)
 
     assert downloader.should_auto_close_browser() is True, "Should return True"
-    print("  ✓ should_auto_close_browser returns config value")
+    print("  [PASS] should_auto_close_browser returns config value")
 
 
 def test_download_method_signature():
@@ -240,7 +240,7 @@ def test_download_method_signature():
             print(f"  Note: {display_name}: {e}")
             continue
 
-    print("  ✓ All sources have correct download() signature")
+    print("  [PASS] All sources have correct download() signature")
 
 
 def run_tests():
@@ -273,10 +273,10 @@ def run_tests():
             test()
             passed += 1
         except AssertionError as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
         except Exception as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
 
     print("=" * 60)

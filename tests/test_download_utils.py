@@ -24,7 +24,7 @@ def test_get_file_hash_valid_file():
         hash_result = DownloadUtilities.get_file_hash(filepath)
         assert hash_result != "", "Hash should not be empty"
         assert len(hash_result) == 32, f"MD5 hash should be 32 chars, got {len(hash_result)}"
-        print(f"  ✓ get_file_hash returns valid MD5: {hash_result[:8]}...")
+        print(f"  [PASS] get_file_hash returns valid MD5: {hash_result[:8]}...")
     finally:
         os.unlink(filepath)
 
@@ -33,7 +33,7 @@ def test_get_file_hash_missing_file():
     """Test get_file_hash returns empty string for missing file"""
     result = DownloadUtilities.get_file_hash("/nonexistent/path/file.txt")
     assert result == "", "Should return empty string for missing file"
-    print("  ✓ get_file_hash handles missing file gracefully")
+    print("  [PASS] get_file_hash handles missing file gracefully")
 
 
 def test_get_file_hash_empty_file():
@@ -44,7 +44,7 @@ def test_get_file_hash_empty_file():
     try:
         hash_result = DownloadUtilities.get_file_hash(filepath)
         assert hash_result != "", "Empty file should still produce a hash"
-        print("  ✓ get_file_hash handles empty file")
+        print("  [PASS] get_file_hash handles empty file")
     finally:
         os.unlink(filepath)
 
@@ -59,7 +59,7 @@ def test_is_file_locked_unlocked_file():
     try:
         locked = DownloadUtilities.is_file_locked(filepath)
         assert locked is False, "Unopened file should not be locked"
-        print("  ✓ is_file_locked returns False for closed file")
+        print("  [PASS] is_file_locked returns False for closed file")
     finally:
         os.unlink(filepath)
 
@@ -74,7 +74,7 @@ def test_is_file_locked_opened_file():
     try:
         locked = DownloadUtilities.is_file_locked(filepath)
         assert locked is True, "Opened file should be detected as locked"
-        print("  ✓ is_file_locked detects open file handle")
+        print("  [PASS] is_file_locked detects open file handle")
     except AssertionError:
         print("  Note: is_file_locked may not detect locks on all platforms")
     finally:
@@ -88,7 +88,7 @@ def test_allowed_extensions():
     assert '.wav' in ALLOWED_EXTENSIONS, "Should allow .wav"
     assert '.zip' in ALLOWED_EXTENSIONS, "Should allow .zip"
     assert '.pdf' in ALLOWED_EXTENSIONS, "Should allow .pdf"
-    print(f"  ✓ ALLOWED_EXTENSIONS: {sorted(ALLOWED_EXTENSIONS)}")
+    print(f"  [PASS] ALLOWED_EXTENSIONS: {sorted(ALLOWED_EXTENSIONS)}")
 
 
 def test_excluded_extensions():
@@ -97,14 +97,14 @@ def test_excluded_extensions():
     assert '.crdownload' in EXCLUDED_EXTENSIONS, "Should exclude .crdownload"
     assert '.tmp' in EXCLUDED_EXTENSIONS, "Should exclude .tmp"
     assert '.download' in EXCLUDED_EXTENSIONS, "Should exclude .download"
-    print(f"  ✓ EXCLUDED_EXTENSIONS: {sorted(EXCLUDED_EXTENSIONS)}")
+    print(f"  [PASS] EXCLUDED_EXTENSIONS: {sorted(EXCLUDED_EXTENSIONS)}")
 
 
 def test_excluded_prefixes():
     """Test EXCLUDED_PREFIXES contains expected values"""
     assert '.fea' in EXCLUDED_PREFIXES, "Should exclude .fea prefix"
     assert '.X' in EXCLUDED_PREFIXES, "Should exclude .X prefix"
-    print(f"  ✓ EXCLUDED_PREFIXES: {sorted(EXCLUDED_PREFIXES)}")
+    print(f"  [PASS] EXCLUDED_PREFIXES: {sorted(EXCLUDED_PREFIXES)}")
 
 
 def test_find_latest_file_empty_dir():
@@ -112,7 +112,7 @@ def test_find_latest_file_empty_dir():
     with tempfile.TemporaryDirectory() as tmpdir:
         result = DownloadUtilities.find_latest_file(tmpdir)
         assert result is None, "Should return None for empty directory"
-        print("  ✓ find_latest_file returns None for empty dir")
+        print("  [PASS] find_latest_file returns None for empty dir")
 
 
 def test_find_latest_file_with_files():
@@ -126,7 +126,7 @@ def test_find_latest_file_with_files():
         result = DownloadUtilities.find_latest_file(tmpdir, extension='.mp3')
         assert result is not None, "Should find a file"
         assert "new.mp3" in result, f"Should return newest file, got {result}"
-        print(f"  ✓ find_latest_file returns newest: {Path(result).name}")
+        print(f"  [PASS] find_latest_file returns newest: {Path(result).name}")
 
 
 def test_find_latest_file_ignores_temp_files():
@@ -142,7 +142,7 @@ def test_find_latest_file_ignores_temp_files():
         result = DownloadUtilities.find_latest_file(tmpdir, extension='.mp3')
         assert result is not None, "Should find a file"
         assert "temp" not in result, "Should not return .part file"
-        print("  ✓ find_latest_file ignores temp files")
+        print("  [PASS] find_latest_file ignores temp files")
 
 
 def test_simple_wait_for_download_timeout():
@@ -152,7 +152,7 @@ def test_simple_wait_for_download_timeout():
             tmpdir, expected_extensions=['.mp3'], timeout=1
         )
         assert result is None, "Should timeout and return None"
-        print("  ✓ simple_wait_for_download handles timeout gracefully")
+        print("  [PASS] simple_wait_for_download handles timeout gracefully")
 
 
 def test_simple_wait_for_download_detects_file():
@@ -174,7 +174,7 @@ def test_simple_wait_for_download_detects_file():
         t.join()
         assert result is not None, "Should detect new file"
         assert "test.mp3" in result, f"Should return the new file, got {result}"
-        print(f"  ✓ simple_wait_for_download detected file: {Path(result).name}")
+        print(f"  [PASS] simple_wait_for_download detected file: {Path(result).name}")
 
 
 def run_tests():
@@ -207,10 +207,10 @@ def run_tests():
             test()
             passed += 1
         except AssertionError as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
         except Exception as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
 
     print("=" * 60)

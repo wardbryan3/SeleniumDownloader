@@ -18,15 +18,15 @@ def test_parse_version_valid():
 
     result = checker.parse_version("1.1.8")
     assert result == (1, 1, 8), f"Expected (1, 1, 8), got {result}"
-    print(f"  ✓ parse_version('1.1.8') = {result}")
+    print(f"  [PASS] parse_version('1.1.8') = {result}")
 
     result = checker.parse_version("2.0")
     assert result == (2, 0), f"Expected (2, 0), got {result}"
-    print(f"  ✓ parse_version('2.0') = {result}")
+    print(f"  [PASS] parse_version('2.0') = {result}")
 
     result = checker.parse_version("10.20.30")
     assert result == (10, 20, 30), f"Expected (10, 20, 30), got {result}"
-    print(f"  ✓ parse_version('10.20.30') = {result}")
+    print(f"  [PASS] parse_version('10.20.30') = {result}")
 
 
 def test_parse_version_invalid():
@@ -47,7 +47,7 @@ def test_parse_version_invalid():
     result = checker.parse_version("1.0.0.0")
     assert result == (1, 0, 0), f"Expected (1, 0, 0) for '1.0.0.0', got {result}"
 
-    print("  ✓ parse_version handles invalid versions correctly")
+    print("  [PASS] parse_version handles invalid versions correctly")
 
 
 def test_parse_version_none():
@@ -60,7 +60,7 @@ def test_parse_version_none():
     except (AttributeError, TypeError):
         # This is acceptable - function may not handle None gracefully
         pass
-    print("  ✓ parse_version handles None (may raise or return (0,0,0))")
+    print("  [PASS] parse_version handles None (may raise or return (0,0,0))")
 
 
 def test_check_for_update_newer_available():
@@ -84,7 +84,7 @@ def test_check_for_update_newer_available():
         assert update_available is True, f"Expected update available, got {update_available}"
         assert version == "2.0.0", f"Expected '2.0.0', got '{version}'"
         assert "github.com" in url, f"Expected github URL, got '{url}'"
-        print(f"  ✓ Detected newer version: {version}")
+        print(f"  [PASS] Detected newer version: {version}")
 
 
 def test_check_for_update_current_is_latest():
@@ -107,7 +107,7 @@ def test_check_for_update_current_is_latest():
 
         assert update_available is False, "Should report no update available"
         assert version == "1.1.8", f"Expected '1.1.8', got '{version}'"
-        print(f"  ✓ Correctly reports no update (current is latest)")
+        print(f"  [PASS] Correctly reports no update (current is latest)")
 
 
 def test_check_for_update_network_error():
@@ -120,7 +120,7 @@ def test_check_for_update_network_error():
 
         assert update_available is False, "Should return False on error"
         assert version == "", f"Expected empty version, got '{version}'"
-        print("  ✓ Handles network errors gracefully")
+        print("  [PASS] Handles network errors gracefully")
 
 
 def test_check_for_update_invalid_json():
@@ -138,14 +138,14 @@ def test_check_for_update_invalid_json():
         update_available, version, url, notes = checker.check_for_update()
 
         assert update_available is False, "Should return False on invalid JSON"
-        print("  ✓ Handles invalid JSON gracefully")
+        print("  [PASS] Handles invalid JSON gracefully")
 
 
 def test_latest_version_property():
     """Test latest_version property"""
     checker = UpdateChecker("1.0.0")
     assert checker.latest_version == "unknown", "Should be 'unknown' before check"
-    print("  ✓ latest_version is 'unknown' before check")
+    print("  [PASS] latest_version is 'unknown' before check")
 
 
 def test_download_url_property():
@@ -153,7 +153,7 @@ def test_download_url_property():
     checker = UpdateChecker("1.0.0")
     url = checker.download_url
     assert "github.com" in url, f"Expected github URL, got '{url}'"
-    print(f"  ✓ download_url: {url}")
+    print(f"  [PASS] download_url: {url}")
 
 
 def test_check_for_updates_async():
@@ -186,7 +186,7 @@ def test_check_for_updates_async():
         result = callback_results[0]
         assert result[0] is True, "Should detect update"
         assert result[1] == "2.0.0", f"Expected '2.0.0', got '{result[1]}'"
-        print("  ✓ Async checker calls callback with correct result")
+        print("  [PASS] Async checker calls callback with correct result")
 
 
 def run_tests():
@@ -216,10 +216,10 @@ def run_tests():
             test()
             passed += 1
         except AssertionError as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
         except Exception as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
 
     print("=" * 60)

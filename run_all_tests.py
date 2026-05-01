@@ -48,10 +48,10 @@ def main():
         )
 
         if result.returncode == 0:
-            print(f"  ✓ PASSED: {test_file}")
+            print(f"  [PASS] PASSED: {test_file}")
             results.append((test_file, "PASSED"))
         else:
-            print(f"  ✗ FAILED: {test_file} (exit code: {result.returncode})")
+            print(f"  [FAIL] FAILED: {test_file} (exit code: {result.returncode})")
             results.append((test_file, "FAILED"))
             failed += 1
         print()

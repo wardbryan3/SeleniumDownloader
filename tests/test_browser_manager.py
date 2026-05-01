@@ -18,9 +18,9 @@ class TestBrowserManager:
         try:
             import browser_manager
             assert hasattr(browser_manager, 'BrowserManager'), "Should have BrowserManager class"
-            print("  ✓ browser_manager imports successfully")
+            print("  [PASS] browser_manager imports successfully")
         except ImportError as e:
-            print(f"  ✗ Import failed: {e}")
+            print(f"  [FAIL] Import failed: {e}")
             raise
 
     def test_browser_manager_has_required_methods(self):
@@ -39,9 +39,9 @@ class TestBrowserManager:
             for method in required_methods:
                 assert hasattr(BrowserManager, method), f"Missing method: {method}"
 
-            print("  ✓ BrowserManager has all required methods")
+            print("  [PASS] BrowserManager has all required methods")
         except ImportError as e:
-            print(f"  ✗ Import failed: {e}")
+            print(f"  [FAIL] Import failed: {e}")
             raise
 
     def test_selenium_webdriver_imports(self):
@@ -53,9 +53,9 @@ class TestBrowserManager:
 
             assert hasattr(webdriver, 'Firefox'), "Should have Firefox webdriver"
 
-            print("  ✓ Selenium Firefox imports successful")
+            print("  [PASS] Selenium Firefox imports successful")
         except ImportError as e:
-            print(f"  ✗ Selenium import failed: {e}")
+            print(f"  [FAIL] Selenium import failed: {e}")
             raise
 
     def test_webdriver_manager_imports(self):
@@ -63,9 +63,9 @@ class TestBrowserManager:
         try:
             from webdriver_manager.firefox import GeckoDriverManager
 
-            print("  ✓ webdriver_manager GeckoDriverManager imports successful")
+            print("  [PASS] webdriver_manager GeckoDriverManager imports successful")
         except ImportError as e:
-            print(f"  ✗ webdriver_manager import failed: {e}")
+            print(f"  [FAIL] webdriver_manager import failed: {e}")
             raise
 
 
@@ -85,7 +85,7 @@ class TestBrowserStartup:
             bm = BrowserManager.__new__(BrowserManager)
             bm.browser_type = 'chrome'
 
-            print("  ✓ Chrome browser startup logic works")
+            print("  [PASS] Chrome browser startup logic works")
         except Exception as e:
             print(f"  Note: {e} (expected without full browser setup)")
 
@@ -102,7 +102,7 @@ class TestBrowserStartup:
             bm = BrowserManager.__new__(BrowserManager)
             bm.browser_type = 'firefox'
 
-            print("  ✓ Firefox browser startup logic works")
+            print("  [PASS] Firefox browser startup logic works")
         except Exception as e:
             print(f"  Note: {e} (expected without full browser setup)")
 
@@ -119,9 +119,9 @@ class TestBrowserStartup:
 
             assert "--headless" in chrome_opts.arguments
 
-            print("  ✓ Browser options configuration works")
+            print("  [PASS] Browser options configuration works")
         except ImportError as e:
-            print(f"  ✗ Import failed: {e}")
+            print(f"  [FAIL] Import failed: {e}")
             raise
 
 
@@ -138,7 +138,7 @@ class TestBrowserCleanup:
         except Exception:
             pass
 
-        print("  ✓ Driver quit handles errors gracefully")
+        print("  [PASS] Driver quit handles errors gracefully")
 
     def test_close_browser_method_exists(self):
         """Test close_browser method exists"""
@@ -147,9 +147,9 @@ class TestBrowserCleanup:
 
             assert hasattr(BrowserManager, 'close_browser'), "Missing close_browser method"
 
-            print("  ✓ close_browser method exists")
+            print("  [PASS] close_browser method exists")
         except ImportError as e:
-            print(f"  ✗ Import failed: {e}")
+            print(f"  [FAIL] Import failed: {e}")
             raise
 
 
@@ -181,10 +181,10 @@ def run_tests():
             test()
             passed += 1
         except AssertionError as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
         except Exception as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
 
     print("=" * 60)

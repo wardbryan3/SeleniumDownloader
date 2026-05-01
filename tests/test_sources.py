@@ -21,7 +21,7 @@ def test_northwest_outdoors_url_validation():
     is_valid = bool(url) and "YOUR_LINK" in url and "REMOVED" not in url
 
     assert is_valid, f"URL should be valid: {url}"
-    print(f"  ✓ northwest_outdoors URL: {url}")
+    print(f"  [PASS] northwest_outdoors URL: {url}")
 
 
 def test_whittler_url_validation():
@@ -34,7 +34,7 @@ def test_whittler_url_validation():
     is_valid = bool(url) and "YOUR_LINK" in url and "REMOVED" not in url
 
     assert is_valid, f"URL should be valid: {url}"
-    print(f"  ✓ whittler URL: {url}")
+    print(f"  [PASS] whittler URL: {url}")
 
 
 def test_dropbox_url_format():
@@ -46,7 +46,7 @@ def test_dropbox_url_format():
         if url and "YOUR_LINK" not in url and "REMOVED" not in url:
             assert "dropbox.com" in url.lower(), f"Should be Dropbox URL: {url}"
             assert "scl/fo/" in url, f"Should be shared link format: {url}"
-            print(f"  ✓ {source} has correct Dropbox format")
+            print(f"  [PASS] {source} has correct Dropbox format")
 
 
 def test_missing_urls_handled():
@@ -57,7 +57,7 @@ def test_missing_urls_handled():
     is_invalid = not url or "YOUR_LINK" in str(url)
     assert is_invalid, "Missing URL should be detected"
 
-    print("  ✓ Missing URLs handled correctly")
+    print("  [PASS] Missing URLs handled correctly")
 
 
 def test_partial_urls_config():
@@ -77,7 +77,7 @@ def test_partial_urls_config():
     assert is_nwo_valid, "Northwest Outdoors URL should be valid"
     assert not is_whittler_valid, "Whittler URL should be invalid (not in config)"
 
-    print("  ✓ Partial URLs config handled correctly")
+    print("  [PASS] Partial URLs config handled correctly")
 
 
 def test_url_with_special_characters():
@@ -91,7 +91,7 @@ def test_url_with_special_characters():
         is_valid = url and "YOUR_LINK" not in url
         assert is_valid, f"URL with special chars should be valid: {url}"
 
-    print("  ✓ URLs with special characters handled correctly")
+    print("  [PASS] URLs with special characters handled correctly")
 
 
 def test_validation_logic_matches_northwest_outdoors():
@@ -117,7 +117,7 @@ def test_validation_logic_matches_northwest_outdoors():
         actual = bool(url) and "YOUR_LINK" not in str(url) and "REMOVED" not in str(url)
         assert actual == expected, f"{name}: expected {expected}, got {actual}"
 
-    print("  ✓ Northwest Outdoors validation logic matches source")
+    print("  [PASS] Northwest Outdoors validation logic matches source")
 
 
 def test_validation_logic_matches_whittler():
@@ -143,7 +143,7 @@ def test_validation_logic_matches_whittler():
         actual = bool(url) and "YOUR_LINK" not in str(url) and "REMOVED" not in str(url)
         assert actual == expected, f"{name}: expected {expected}, got {actual}"
 
-    print("  ✓ Whittler validation logic matches source")
+    print("  [PASS] Whittler validation logic matches source")
 
 
 def run_tests():
@@ -171,10 +171,10 @@ def run_tests():
             test()
             passed += 1
         except AssertionError as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
         except Exception as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
 
     print("=" * 60)
