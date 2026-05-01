@@ -60,7 +60,7 @@ def main():
     print("Summary:")
     print("=" * 60)
     for test_file, status in results:
-        marker = "✓" if status == "PASSED" else "✗"
+        marker = "[PASS]" if status == "PASSED" else "[FAIL]"
         print(f"  {marker} {test_file}: {status}")
 
     print()
