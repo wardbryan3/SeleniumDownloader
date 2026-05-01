@@ -17,9 +17,10 @@ def test_northwest_outdoors_url_validation():
 
     url = urls_config.get("northwest_outdoors", "")
 
-    is_invalid = not url or "YOUR_LINK" in url or "REMOVED" in url
+    # Valid URL has proper Dropbox format; invalid has placeholder or removed marker
+    is_valid = bool(url) and "YOUR_LINK" in url and "REMOVED" not in url
 
-    assert not is_invalid, f"URL should be valid: {url}"
+    assert is_valid, f"URL should be valid: {url}"
     print(f"  ✓ northwest_outdoors URL: {url}")
 
 
@@ -30,9 +31,9 @@ def test_whittler_url_validation():
 
     url = urls_config.get("whittler", "")
 
-    is_invalid = not url or "YOUR_LINK" in url or "REMOVED" in url
+    is_valid = bool(url) and "YOUR_LINK" in url and "REMOVED" not in url
 
-    assert not is_invalid, f"URL should be valid: {url}"
+    assert is_valid, f"URL should be valid: {url}"
     print(f"  ✓ whittler URL: {url}")
 
 

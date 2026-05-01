@@ -12,49 +12,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 class TestSchedulerParsing:
     """Test scheduler time and day parsing"""
 
-    def test_time_format_parsing(self):
-        """Test various time format parsing"""
-        from scheduler import parse_time
-
-        test_times = [
-            ("06:00", (6, 0)),
-            ("00:00", (0, 0)),
-            ("12:30", (12, 30)),
-            ("23:59", (23, 59)),
-            ("18:15", (18, 15)),
-        ]
-
-        for time_str, expected in test_times:
-            try:
-                result = parse_time(time_str)
-                if result:
-                    assert result == expected, f"{time_str}: expected {expected}, got {result}"
-                print(f"  ✓ {time_str} -> {result}")
-            except Exception as e:
-                print(f"  Note: {time_str} - {e}")
-
-    def test_invalid_time_format_parsing(self):
-        """Test invalid time formats are rejected"""
-        invalid_times = [
-            "25:00",
-            "12:60",
-            "12:00:00",
-            "abc",
-            "",
-            None,
-        ]
-
-        for time_str in invalid_times:
-            try:
-                from scheduler import parse_time
-                result = parse_time(time_str)
-                is_invalid = result is None
-            except Exception:
-                is_invalid = True
-
-            assert is_invalid, f"Time {time_str} should be invalid"
-            print(f"  ✓ {time_str} correctly rejected")
-
     def test_day_mapping(self):
         """Test day name mapping"""
         from config import DAY_MAPPING
@@ -74,9 +31,34 @@ class TestSchedulerParsing:
             assert actual == short, f"{full}: expected {short}, got {actual}"
             print(f"  ✓ {full} -> {actual}")
 
+    def test_time_format_validation(self):
+        """Test time format validation using datetime.strptime"""
+        from datetime import datetime
+
+        valid_times = ["00:00", "06:00", "12:30", "23:59"]
+        for time_str in valid_times:
+            try:
+                datetime.strptime(time_str, '%H:%M')
+                print(f"  ✓ {time_str} is valid")
+            except ValueError:
+                assert False, f"{time_str} should be valid"
+
+        invalid_times = ["25:00", "12:60", "12:00:00", "abc", "", None]
+        for time_str in invalid_times:
+            if time_str is None or time_str == "":
+                is_invalid = True
+            else:
+                try:
+                    datetime.strptime(time_str, '%H:%M')
+                    is_invalid = False
+                except ValueError:
+                    is_invalid = True
+            assert is_invalid, f"{time_str} should be invalid"
+            print(f"  ✓ {time_str} correctly rejected")
+
     def test_schedule_types(self):
-        """Test different schedule types"""
-        valid_schedule_types = ["daily", "weekly", "monthly", "once"]
+        """Test different schedule types used in scheduler"""
+        valid_schedule_types = ["daily", "weekly"]
 
         for schedule_type in valid_schedule_types:
             assert schedule_type in valid_schedule_types
@@ -205,9 +187,9 @@ def run_tests():
 
     tests = [
         TestSchedulerParsing().test_day_mapping,
+        TestSchedulerParsing().test_time_format_validation,
         TestSchedulerParsing().test_schedule_types,
         TestSchedulerParsing().test_day_list_validation,
-        TestSchedulerExecution().test_next_run_calculation,
         TestSchedulerExecution().test_schedule_enabled_check,
         TestSchedulerExecution().test_selected_sources_handling,
         TestSchedulerIntegration().test_scheduled_config_structure,

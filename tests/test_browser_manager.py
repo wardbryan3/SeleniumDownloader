@@ -31,8 +31,9 @@ class TestBrowserManager:
                 'start_browser',
                 'close_browser',
                 'get_driver',
-                'get_browser_type',
-                'set_browser_type',
+                'is_browser_open',
+                'get_browser_downloads',
+                'wait_for_browser_download_complete',
             ]
 
             for method in required_methods:
@@ -43,43 +44,26 @@ class TestBrowserManager:
             print(f"  ✗ Import failed: {e}")
             raise
 
-    def test_browser_type_defaults(self):
-        """Test default browser type settings"""
-        try:
-            from browser_manager import BrowserManager
-            bm = BrowserManager.__new__(BrowserManager)
-
-            default_browser = getattr(bm, 'browser_type', 'chrome')
-            assert default_browser in ['chrome', 'firefox', 'edge'], f"Invalid default: {default_browser}"
-
-            print(f"  ✓ Default browser type: {default_browser}")
-        except Exception as e:
-            print(f"  ✗ Test failed: {e}")
-
     def test_selenium_webdriver_imports(self):
-        """Test that Selenium WebDriver can be imported"""
+        """Test that Selenium WebDriver can be imported (Firefox only)"""
         try:
             from selenium import webdriver
-            from selenium.webdriver.chrome.service import Service
-            from selenium.webdriver.chrome.options import Options
+            from selenium.webdriver.firefox.service import Service
+            from selenium.webdriver.firefox.options import Options
 
-            assert hasattr(webdriver, 'Chrome'), "Should have Chrome webdriver"
             assert hasattr(webdriver, 'Firefox'), "Should have Firefox webdriver"
-            assert hasattr(webdriver, 'Edge'), "Should have Edge webdriver"
 
-            print("  ✓ Selenium WebDriver imports successful")
+            print("  ✓ Selenium Firefox imports successful")
         except ImportError as e:
             print(f"  ✗ Selenium import failed: {e}")
             raise
 
     def test_webdriver_manager_imports(self):
-        """Test that webdriver_manager can be imported"""
+        """Test that webdriver_manager can be imported (Firefox only)"""
         try:
-            from webdriver_manager.chrome import ChromeDriverManager
             from webdriver_manager.firefox import GeckoDriverManager
-            from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
-            print("  ✓ webdriver_manager imports successful")
+            print("  ✓ webdriver_manager GeckoDriverManager imports successful")
         except ImportError as e:
             print(f"  ✗ webdriver_manager import failed: {e}")
             raise
@@ -182,7 +166,6 @@ def run_tests():
     tests = [
         tester.test_browser_manager_imports,
         tester.test_browser_manager_has_required_methods,
-        tester.test_browser_type_defaults,
         tester.test_selenium_webdriver_imports,
         tester.test_webdriver_manager_imports,
         startup_tester.test_browser_options_configured,

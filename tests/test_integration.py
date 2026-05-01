@@ -34,27 +34,18 @@ class TestDownloadWorkflow:
         print("  ✓ Full ConfigManager workflow works")
 
     def test_source_initialization(self):
-        """Test that all sources can be initialized"""
-        from sources.base import BaseDownloader
-        from config import ConfigManager
-
-        cm = ConfigManager()
-
-        source_classes = [
-            'MelindaMyersDownloader',
-            'NorthwestOutdoorsDownloader',
-            'WhittlerDownloader',
-            'WestwoodOneDownloader',
-            'ClearOutWestDownloader',
-        ]
-
-        for class_name in source_classes:
-            try:
-                module = __import__(f'sources.{class_name.lower().replace("downloader", "")}', fromlist=[class_name])
-                cls = getattr(module, class_name)
-                print(f"  ✓ {class_name} can be imported")
-            except (ImportError, AttributeError) as e:
-                print(f"  Note: {class_name} - {e}")
+        """Test that all sources can be imported"""
+        try:
+            from sources import (
+                MelindaMyersDownloader,
+                NorthwestOutdoorsDownloader,
+                WhittlerDownloader,
+                WestwoodOneDownloader,
+                ClearOutWestDownloader,
+            )
+            print("  ✓ All source downloaders can be imported")
+        except ImportError as e:
+            print(f"  Note: Import failed - {e}")
 
     def test_downloader_has_required_methods(self):
         """Test BaseDownloader has required methods"""
@@ -62,8 +53,11 @@ class TestDownloadWorkflow:
 
         required_methods = [
             'download',
-            'cleanup',
+            'handle_dropbox_popup',
+            'find_coming_weekday',
+            'get_download_dir',
             'should_auto_close_browser',
+            'wait_for_download_and_get_file',
         ]
 
         for method in required_methods:
@@ -99,7 +93,7 @@ class TestEndToEndScenarios:
         from browser_manager import BrowserManager
 
         cm = ConfigManager()
-        bm = BrowserManager()
+        bm = BrowserManager(cm)
 
         downloader = NorthwestOutdoorsDownloader(cm, bm)
 
@@ -119,7 +113,7 @@ class TestEndToEndScenarios:
         from browser_manager import BrowserManager
 
         cm = ConfigManager()
-        bm = BrowserManager()
+        bm = BrowserManager(cm)
 
         downloader = WhittlerDownloader(cm, bm)
 
@@ -198,29 +192,24 @@ class TestErrorHandling:
     def test_missing_config_file_creates_default(self):
         """Test that missing config file creates default"""
         import tempfile
+        import config
 
-        temp_config = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
+        # Save original and point to a temp file
+        original_config_file = config.CONFIG_FILE
+        temp_config = tempfile.NamedTemporaryFile(delete=False, suffix='.json', dir=os.getcwd())
         temp_config.close()
-        os.unlink(temp_config.name)
-
-        original_file = ConfigManager.CONFIG_FILE if hasattr(ConfigManager, 'CONFIG_FILE') else None
+        if os.path.exists(temp_config.name):
+            os.unlink(temp_config.name)
 
         try:
-            import config
             config.CONFIG_FILE = temp_config.name
-
-            if os.path.exists(temp_config.name):
-                os.unlink(temp_config.name)
 
             cm = ConfigManager()
 
             assert os.path.exists(temp_config.name), "Config file should be created"
-
             print(f"  ✓ Missing config creates default at: {temp_config.name}")
-
         finally:
-            if original_file:
-                config.CONFIG_FILE = original_file
+            config.CONFIG_FILE = original_config_file
             if os.path.exists(temp_config.name):
                 os.unlink(temp_config.name)
 
