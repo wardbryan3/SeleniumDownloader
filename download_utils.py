@@ -4,7 +4,9 @@ Download utilities for monitoring and file handling
 """
 
 import os
+import sys
 import time
+import subprocess
 import logging
 import glob
 import psutil
@@ -231,20 +233,18 @@ class DownloadUtilities:
             logger.error(f"Error finding latest file: {e}")
             return None
 
-    # Add this method to DownloadUtilities class
     @staticmethod
     def monitor_for_download(download_dir, expected_extensions=None, timeout=30):
         """Simple monitor that watches for new files and waits for them to stabilize"""
         if expected_extensions is None:
             expected_extensions = ['.zip', '.mp3']
-        
+
         logger.info(f"Simple monitor for downloads in {download_dir}")
-        
+
         download_path = Path(download_dir)
         if not download_path.exists():
             os.makedirs(download_dir, exist_ok=True)
-        
-        # Record initial files
+
         initial_files = {}
         for file_path in download_path.iterdir():
             if file_path.is_file():
@@ -256,11 +256,10 @@ class DownloadUtilities:
                     }
                 except OSError:
                     continue
-        
+
         start_time = time.time()
-        
+
         while time.time() - start_time < timeout:
-            # Check current files
             current_files = {}
             for file_path in download_path.iterdir():
                 if file_path.is_file():
@@ -272,52 +271,47 @@ class DownloadUtilities:
                         }
                     except OSError:
                         continue
-            
-            # Find new or modified files
+
             for filename, fileinfo in current_files.items():
-                # Check if it's new or modified
                 is_new = filename not in initial_files
-                is_modified = (filename in initial_files and 
+                is_modified = (filename in initial_files and
                             fileinfo['size'] != initial_files[filename]['size'])
-                
+
                 if is_new or is_modified:
-                    # Check if it has a valid extension
                     has_valid_ext = any(filename.endswith(ext) for ext in expected_extensions)
                     is_temp = any(filename.endswith(ext) for ext in ['.part', '.crdownload', '.tmp', '.download'])
-                    
-                    # We're interested in valid files or temp files that might become valid
+
                     if has_valid_ext or is_temp:
                         logger.debug(f"Tracking file: {filename} (size: {fileinfo['size']})")
-                        
-                        # If it's a valid file and not temp, check if it's stable
+
                         if has_valid_ext and not is_temp and fileinfo['size'] > 0:
-                            # Wait a moment and check again
                             time.sleep(1)
                             try:
                                 new_size = os.path.getsize(fileinfo['path'])
                                 if new_size == fileinfo['size']:
-                                    logger.info(f"✓ Download complete: {filename}")
+                                    logger.info(f"Download complete: {filename}")
                                     return fileinfo['path']
                             except OSError:
                                 continue
-            
+
             time.sleep(0.5)
-        
+
         return None
+
     @staticmethod
     def simple_wait_for_download(download_dir, expected_extensions=None, timeout=30):
         """Simple, reliable method to wait for downloads"""
         if expected_extensions is None:
             expected_extensions = ['.zip', '.mp3']
-        
+
         download_path = Path(download_dir).resolve()
         logger.info(f"Simple wait for download in {download_path}")
-        
+
         if not download_path.exists():
             download_path.mkdir(parents=True, exist_ok=True)
-        
+
         start_time = time.time()
-        
+
         initial_files = {}
         for file_path in download_path.iterdir():
             if file_path.is_file():
@@ -327,11 +321,11 @@ class DownloadUtilities:
                         'size': file_path.stat().st_size,
                         'mtime': file_path.stat().st_mtime
                     }
-                except:
+                except Exception:
                     continue
-        
+
         logger.info(f"Found {len(initial_files)} initial files")
-        
+
         while time.time() - start_time < timeout:
             current_files = {}
             for file_path in download_path.iterdir():
@@ -342,14 +336,14 @@ class DownloadUtilities:
                             'size': file_path.stat().st_size,
                             'mtime': file_path.stat().st_mtime
                         }
-                    except:
+                    except Exception:
                         continue
-            
+
             for filename, info in current_files.items():
                 if filename not in initial_files:
                     has_valid_ext = any(filename.endswith(ext) for ext in expected_extensions)
                     is_temp = any(filename.endswith(ext) for ext in ['.part', '.crdownload', '.tmp', '.download'])
-                    
+
                     if has_valid_ext and not is_temp:
                         time.sleep(1)
                         try:
@@ -357,203 +351,129 @@ class DownloadUtilities:
                             if new_size == info['size']:
                                 logger.info(f"Found stable new file: {filename} ({info['size']} bytes)")
                                 return info['path']
-                        except:
+                        except Exception:
                             continue
                     elif is_temp:
                         logger.debug(f"Found temp file: {filename}")
                 elif info['size'] > initial_files[filename]['size']:
                     logger.debug(f"File is growing: {filename} {initial_files[filename]['size']} -> {info['size']}")
-            
+
             time.sleep(1)
-        
+
         logger.warning(f"Timeout after {timeout} seconds")
-        
+
         for filename, info in current_files.items():
             if filename not in initial_files:
                 has_valid_ext = any(filename.endswith(ext) for ext in expected_extensions)
                 is_temp = any(filename.endswith(ext) for ext in ['.part', '.crdownload', '.tmp', '.download'])
-                
+
                 if has_valid_ext and not is_temp:
                     logger.info(f"Returning new file despite timeout: {filename}")
                     return info['path']
-        
+
         return None
-    
+
     @staticmethod
-    def overlay_audio_tag(promo_file: str, tag_file: str, output_file: str, 
-                          overlap_seconds: int = 10) -> bool:
-        """
-        Overlay an audio tag over the last N seconds of a promo file.
-        Both audio plays simultaneously during the overlap period.
-        
-        Args:
-            promo_file: Path to the promo MP3 file
-            tag_file: Path to the WAV tag file
-            output_file: Path for the output MP3 file
-            overlap_seconds: How many seconds to overlap (default: 10)
-        
-        Returns:
-            True if successful, False otherwise
-        """
-        import subprocess
-        import shlex
-        
-        logger.info(f"Overlaying tag over last {overlap_seconds}s of {promo_file}")
-        
-        if not Path(promo_file).exists():
-            logger.error(f"Promo file not found: {promo_file}")
-            return False
-        
-        if not Path(tag_file).exists():
-            logger.error(f"Tag file not found: {tag_file}")
-            return False
-        
-        output_path = Path(output_file)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        cmd = [
-            'ffmpeg', '-y',
-            '-i', promo_file,
-            '-i', tag_file,
-            '-filter_complex',
-            f'[0:a]aformat=sample_fmts=s16:channel_layouts=stereo,'
-            f'adelay=0|0[promo];'
-            f'[1:a]aformat=sample_fmts=s16:channel_layouts=stereo[tag];'
-            f'[promo][tag]amix=inputs=2:duration=first:normalize=0[out]',
-            '-map', '[out]',
-            '-t', str(overlap_seconds),
-            str(output_path)
-        ]
-        
+    def _get_audio_duration(file_path: str) -> float | None:
+        """Get audio duration in seconds using ffprobe."""
         try:
             result = subprocess.run(
-                cmd,
+                [
+                    'ffprobe', '-v', 'error',
+                    '-show_entries', 'format=duration',
+                    '-of', 'default=noprint_wrappers=1:nokey=1',
+                    file_path,
+                ],
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=10,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0,
             )
-            
-            if result.returncode == 0:
-                logger.info(f"Overlay complete: {output_file}")
-                return True
-            else:
-                logger.error(f"FFmpeg error: {result.stderr}")
-                return False
-                
-        except subprocess.TimeoutExpired:
-            logger.error("FFmpeg timed out")
-            return False
-        except FileNotFoundError:
-            logger.error("FFmpeg not found. Please install FFmpeg.")
-            return False
-        except Exception as e:
-            logger.error(f"Error overlaying audio: {e}")
-            return False
-    
+            if result.returncode == 0 and result.stdout.strip():
+                return float(result.stdout.strip())
+        except (subprocess.TimeoutExpired, FileNotFoundError, ValueError):
+            pass
+        return None
+
     @staticmethod
     def overlay_promo_with_tag(promo_file: str, tag_file: str, output_file: str,
                                 overlap_seconds: int = 10) -> bool:
         """
-        Take the promo file, keep everything except the last N seconds,
-        then append the last N seconds mixed with the tag file.
-        
+        Keep the full promo except the last N seconds, then append the last
+        N seconds mixed with the tag file so both play simultaneously.
+
         Args:
             promo_file: Path to the promo MP3 file
             tag_file: Path to the WAV tag file
             output_file: Path for the output MP3 file
             overlap_seconds: How many seconds to overlap (default: 10)
-        
+
         Returns:
             True if successful, False otherwise
         """
-        import subprocess
-        
         logger.info(f"Processing promo: {promo_file} with tag overlay")
-        
+
         if not Path(promo_file).exists():
             logger.error(f"Promo file not found: {promo_file}")
             return False
-        
+
         if not Path(tag_file).exists():
             logger.error(f"Tag file not found: {tag_file}")
             return False
-        
-        output_path = Path(output_file)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        logger.info(f"FFmpeg: promo_file = {promo_file}")
-        logger.info(f"FFmpeg: tag_file = {tag_file}")
-        logger.info(f"FFmpeg: output_file = {output_file}")
-        
-        promo_exists = Path(promo_file).exists()
-        tag_exists = Path(tag_file).exists()
-        logger.info(f"FFmpeg: promo exists = {promo_exists}")
-        logger.info(f"FFmpeg: tag exists = {tag_exists}")
-        
-        ffmpeg_cmd = [
+
+        promo_duration = DownloadUtilities._get_audio_duration(promo_file)
+        if promo_duration is None or promo_duration <= overlap_seconds:
+            logger.warning(
+                f"Could not determine promo duration ({promo_duration}s), "
+                f"skipping tag overlay"
+            )
+            return False
+
+        pre_duration = promo_duration - overlap_seconds
+        filter_complex = (
+            f'[0:a]atrim=0:{pre_duration},asetpts=PTS-STARTPTS[pre];'
+            f'[0:a]atrim=start={pre_duration},asetpts=PTS-STARTPTS[ending];'
+            f'[ending][1:a]amix=inputs=2:duration=first:normalize=0[mixed];'
+            f'[pre][mixed]concat=n=2:v=0:a=1[out]'
+        )
+
+        cmd = [
             'ffmpeg', '-y',
             '-i', promo_file,
             '-i', tag_file,
-            '-filter_complex',
-            (
-                f'[0:a]aformat=sample_fmts=s16:channel_layouts=stereo[promo_fmt];'
-                f'[1:a]aformat=sample_fmts=s16:channel_layouts=stereo[tag_fmt];'
-                f'[promo_fmt]atrim=0:duration=(N-10),asetpts=PTS-STARTPTS[pre];'
-                f'[promo_fmt]atrim=start=(N-10),asetpts=PTS-STARTPTS[ending];'
-                f'[ending][tag_fmt]amix=inputs=2:duration=first:normalize=0[mixed];'
-                f'[pre][mixed]concat=n=2:v=0:a=1[out]'
-            ).replace('N', f'(T)'),
-            '-filter_complex',
-            (
-                '[0:a]aformat=sample_fmts=s16:channel_layouts=stereo[promo]; '
-                '[1:a]aformat=sample_fmts=s16:channel_layouts=stereo[tag]; '
-                '[promo][tag]amix=inputs=2:duration=first:normalize=0[out]'
-            ),
+            '-filter_complex', filter_complex,
             '-map', '[out]',
-            str(output_path)
+            '-codec:a', 'libmp3lame',
+            '-q:a', '2',
+            output_file,
         ]
-        
+
+        create_flags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+
         try:
+            logger.info(f"Running FFmpeg: {' '.join(cmd)}")
             result = subprocess.run(
-                ['ffmpeg', '-y', '-i', promo_file, '-i', tag_file],
+                cmd,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=120,
+                creationflags=create_flags,
             )
-            
-        except:
-            pass
-        
-        cmd = [
-            'ffmpeg', '-y',
-            '-i', f'"{promo_file}"',
-            '-i', f'"{tag_file}"',
-            '-filter_complex',
-            'amix=inputs=2:duration=first:normalize=0[out]',
-            '-map', '[out]',
-            f'"{output_path}"'
-        ]
-        
-        try:
-            logger.info(f"FFmpeg: running command: {' '.join(cmd)}")
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
-            
-            if result.returncode == 0 and output_path.exists():
-                logger.info(f"Successfully created: {output_file}")
+
+            if result.returncode == 0 and Path(output_file).exists():
+                logger.info(f"Promo with tag saved to {output_file}")
                 return True
             else:
                 logger.error(f"FFmpeg returncode: {result.returncode}")
                 if result.stderr:
                     logger.error(f"FFmpeg stderr: {result.stderr[:1000]}")
-                if result.stdout:
-                    logger.info(f"FFmpeg stdout: {result.stdout[:500]}")
                 return False
-                
+
         except subprocess.TimeoutExpired:
             logger.error("FFmpeg timed out")
             return False
         except FileNotFoundError:
-            logger.error("FFmpeg not found. Please install FFmpeg from https://ffmpeg.org")
+            logger.error("FFmpeg not found. Please install FFmpeg.")
             return False
         except Exception as e:
             logger.error(f"Error creating promo with tag: {e}")

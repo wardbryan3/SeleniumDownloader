@@ -135,9 +135,9 @@ class NorthwestOutdoorsDownloader(BaseDownloader):
                     logger.info(f"Processing promo file: {extracted_file.name}")
                     if update_callback:
                         update_callback(80, "Processing promo with tag...")
-                    
-                    output_file = promos_dir / "NWOUTPR-KORV.mp3"
-                    
+
+                    output_file = promos_dir / extracted_file.name
+
                     if Path(tag_file).exists():
                         from download_utils import DownloadUtilities
                         success = DownloadUtilities.overlay_promo_with_tag(
@@ -146,7 +146,7 @@ class NorthwestOutdoorsDownloader(BaseDownloader):
                             str(output_file),
                             overlap_seconds=10
                         )
-                        
+
                         if success:
                             logger.info(f"Promo with tag saved to {output_file}")
                         else:

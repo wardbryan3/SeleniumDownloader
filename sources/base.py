@@ -122,8 +122,8 @@ class BaseDownloader(ABC):
             for f in download_dir.iterdir():
                 if f.is_file():
                     try:
-                        has_excluded = any(f.name.endswith(ext) for ext in excluded_extensions)
-                        has_excluded_prefix = any(f.name.startswith(prefix) for prefix in excluded_prefixes)
+                        has_excluded = any(f.name.endswith(ext) for ext in EXCLUDED_EXTENSIONS)
+                        has_excluded_prefix = any(f.name.startswith(prefix) for prefix in EXCLUDED_PREFIXES)
                         if has_excluded or has_excluded_prefix:
                             continue
                         
@@ -131,7 +131,7 @@ class BaseDownloader(ABC):
                         prev_size = known_files.get(f.name, 0)
                         
                         if f.name not in known_files:
-                            has_allowed = any(f.name.lower().endswith(ext) for ext in allowed_extensions)
+                            has_allowed = any(f.name.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS)
                             if has_allowed:
                                 logger.info(f"[{elapsed:.1f}s] NEW DOWNLOAD: {f.name} ({current_size} bytes)")
                                 
@@ -150,7 +150,7 @@ class BaseDownloader(ABC):
                                     except:
                                         pass
                         elif current_size != prev_size and prev_size > 0:
-                            if any(f.name.lower().endswith(ext) for ext in allowed_extensions):
+                            if any(f.name.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS):
                                 logger.info(f"[{elapsed:.1f}s] FILE GROWING: {f.name} ({prev_size} -> {current_size} bytes)")
                                 known_files[f.name] = current_size
                     except Exception as e:
@@ -165,8 +165,8 @@ class BaseDownloader(ABC):
         fallback = DownloadUtilities.find_latest_file(str(download_dir), wait_time=1)
         if fallback:
             result_path = Path(fallback)
-            has_excluded = any(result_path.name.endswith(ext) for ext in excluded_extensions)
-            has_allowed = any(result_path.name.lower().endswith(ext) for ext in allowed_extensions)
+            has_excluded = any(result_path.name.endswith(ext) for ext in EXCLUDED_EXTENSIONS)
+            has_allowed = any(result_path.name.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS)
             if has_excluded or not has_allowed:
                 logger.info(f"Fallback file not a valid download, ignoring: {result_path.name}")
                 fallback = None
