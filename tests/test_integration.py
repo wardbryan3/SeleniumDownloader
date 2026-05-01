@@ -31,30 +31,21 @@ class TestDownloadWorkflow:
         cm2.set("test_key", None)
         cm2.save()
 
-        print("  ✓ Full ConfigManager workflow works")
+        print("  [PASS] Full ConfigManager workflow works")
 
     def test_source_initialization(self):
-        """Test that all sources can be initialized"""
-        from sources.base import BaseDownloader
-        from config import ConfigManager
-
-        cm = ConfigManager()
-
-        source_classes = [
-            'MelindaMyersDownloader',
-            'NorthwestOutdoorsDownloader',
-            'WhittlerDownloader',
-            'WestwoodOneDownloader',
-            'ClearOutWestDownloader',
-        ]
-
-        for class_name in source_classes:
-            try:
-                module = __import__(f'sources.{class_name.lower().replace("downloader", "")}', fromlist=[class_name])
-                cls = getattr(module, class_name)
-                print(f"  ✓ {class_name} can be imported")
-            except (ImportError, AttributeError) as e:
-                print(f"  Note: {class_name} - {e}")
+        """Test that all sources can be imported"""
+        try:
+            from sources import (
+                MelindaMyersDownloader,
+                NorthwestOutdoorsDownloader,
+                WhittlerDownloader,
+                WestwoodOneDownloader,
+                ClearOutWestDownloader,
+            )
+            print("  [PASS] All source downloaders can be imported")
+        except ImportError as e:
+            print(f"  Note: Import failed - {e}")
 
     def test_downloader_has_required_methods(self):
         """Test BaseDownloader has required methods"""
@@ -62,14 +53,17 @@ class TestDownloadWorkflow:
 
         required_methods = [
             'download',
-            'cleanup',
+            'handle_dropbox_popup',
+            'find_coming_weekday',
+            'get_download_dir',
             'should_auto_close_browser',
+            'wait_for_download_and_get_file',
         ]
 
         for method in required_methods:
             assert hasattr(BaseDownloader, method), f"Missing method: {method}"
 
-        print("  ✓ BaseDownloader has all required methods")
+        print("  [PASS] BaseDownloader has all required methods")
 
     def test_promo_tag_workflow(self):
         """Test promo tag overlay workflow"""
@@ -79,11 +73,11 @@ class TestDownloadWorkflow:
 
         tag_file = cm.get_tag_file()
         assert tag_file is not None
-        print(f"  ✓ Tag file path: {tag_file}")
+        print(f"  [PASS] Tag file path: {tag_file}")
 
         promos_dir = cm.get_promos_dir()
         assert promos_dir is not None
-        print(f"  ✓ Promos directory: {promos_dir}")
+        print(f"  [PASS] Promos directory: {promos_dir}")
 
 
 class TestEndToEndScenarios:
@@ -99,7 +93,7 @@ class TestEndToEndScenarios:
         from browser_manager import BrowserManager
 
         cm = ConfigManager()
-        bm = BrowserManager()
+        bm = BrowserManager(cm)
 
         downloader = NorthwestOutdoorsDownloader(cm, bm)
 
@@ -107,7 +101,7 @@ class TestEndToEndScenarios:
         is_valid = bool(url) and "YOUR_LINK" not in url
 
         assert is_valid, "URL should be valid"
-        print(f"  ✓ Northwest Outdoors workflow ready with valid URL")
+        print(f"  [PASS] Northwest Outdoors workflow ready with valid URL")
 
     @patch('sources.base.BaseDownloader.start_browser')
     def test_whittler_workflow(self, mock_start_browser):
@@ -119,7 +113,7 @@ class TestEndToEndScenarios:
         from browser_manager import BrowserManager
 
         cm = ConfigManager()
-        bm = BrowserManager()
+        bm = BrowserManager(cm)
 
         downloader = WhittlerDownloader(cm, bm)
 
@@ -127,7 +121,7 @@ class TestEndToEndScenarios:
         is_valid = bool(url) and "YOUR_LINK" not in url
 
         assert is_valid, "URL should be valid"
-        print(f"  ✓ Whittler workflow ready with valid URL")
+        print(f"  [PASS] Whittler workflow ready with valid URL")
 
     def test_test_mode_path_workflow(self):
         """Test test mode vs production mode paths"""
@@ -150,8 +144,8 @@ class TestEndToEndScenarios:
         prod_output = cm.get_output_base_dir()
         assert "Dropbox" in prod_output
 
-        print(f"  ✓ Test mode: {test_output}")
-        print(f"  ✓ Production mode: {prod_output}")
+        print(f"  [PASS] Test mode: {test_output}")
+        print(f"  [PASS] Production mode: {prod_output}")
 
     def test_validate_config_workflow(self):
         """Test config validation workflow"""
@@ -173,7 +167,7 @@ class TestEndToEndScenarios:
         assert not password_error, "Should not have password error"
         assert not cow_error, "Should not have cow_password error"
 
-        print("  ✓ Config validation passes with all required fields")
+        print("  [PASS] Config validation passes with all required fields")
 
     def test_browser_download_dir_workflow(self):
         """Test browser download directory workflow"""
@@ -186,10 +180,10 @@ class TestEndToEndScenarios:
         assert download_dir is not None
         assert len(download_dir) > 0
 
-        print(f"  ✓ Browser download dir: {download_dir}")
+        print(f"  [PASS] Browser download dir: {download_dir}")
 
         cm.clear_browser_download_dir()
-        print("  ✓ Browser download dir cleared")
+        print("  [PASS] Browser download dir cleared")
 
 
 class TestErrorHandling:
@@ -198,29 +192,24 @@ class TestErrorHandling:
     def test_missing_config_file_creates_default(self):
         """Test that missing config file creates default"""
         import tempfile
+        import config
 
-        temp_config = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
+        # Save original and point to a temp file
+        original_config_file = config.CONFIG_FILE
+        temp_config = tempfile.NamedTemporaryFile(delete=False, suffix='.json', dir=os.getcwd())
         temp_config.close()
-        os.unlink(temp_config.name)
-
-        original_file = ConfigManager.CONFIG_FILE if hasattr(ConfigManager, 'CONFIG_FILE') else None
+        if os.path.exists(temp_config.name):
+            os.unlink(temp_config.name)
 
         try:
-            import config
             config.CONFIG_FILE = temp_config.name
-
-            if os.path.exists(temp_config.name):
-                os.unlink(temp_config.name)
 
             cm = ConfigManager()
 
             assert os.path.exists(temp_config.name), "Config file should be created"
-
-            print(f"  ✓ Missing config creates default at: {temp_config.name}")
-
+            print(f"  [PASS] Missing config creates default at: {temp_config.name}")
         finally:
-            if original_file:
-                config.CONFIG_FILE = original_file
+            config.CONFIG_FILE = original_config_file
             if os.path.exists(temp_config.name):
                 os.unlink(temp_config.name)
 
@@ -234,7 +223,7 @@ class TestErrorHandling:
 
         try:
             cm = ConfigManager()
-            print("  ✓ Invalid JSON handled gracefully")
+            print("  [PASS] Invalid JSON handled gracefully")
         except Exception as e:
             print(f"  Note: {e}")
         finally:
@@ -267,10 +256,10 @@ def run_tests():
             test()
             passed += 1
         except AssertionError as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
         except Exception as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
 
     print("=" * 60)

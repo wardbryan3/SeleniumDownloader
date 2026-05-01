@@ -36,7 +36,7 @@ class TestConfigEdgeCases:
 
         for key in required_keys:
             assert key in DEFAULT_CONFIG, f"Missing required key: {key}"
-        print("  ✓ All required keys present in DEFAULT_CONFIG")
+        print("  [PASS] All required keys present in DEFAULT_CONFIG")
 
     def test_url_validation_rejects_invalid_urls(self):
         """Test URL validation logic from sources"""
@@ -51,7 +51,7 @@ class TestConfigEdgeCases:
         for url in invalid_urls:
             is_invalid = not url or "YOUR_LINK" in str(url) or "REMOVED" in str(url)
             assert is_invalid, f"URL should be invalid: {url}"
-        print("  ✓ Invalid URLs correctly identified")
+        print("  [PASS] Invalid URLs correctly identified")
 
     def test_url_validation_accepts_valid_urls(self):
         """Test that valid Dropbox URLs pass validation"""
@@ -63,7 +63,7 @@ class TestConfigEdgeCases:
         for url in valid_urls:
             is_valid = url and "YOUR_LINK" not in url and "REMOVED" not in url
             assert is_valid, f"URL should be valid: {url}"
-        print("  ✓ Valid URLs correctly identified")
+        print("  [PASS] Valid URLs correctly identified")
 
     def test_config_merge_user_overrides_defaults(self):
         """Test that user config properly overrides defaults"""
@@ -85,7 +85,7 @@ class TestConfigEdgeCases:
         assert merged["cow_password"] == "secret"
         assert merged["urls"]["northwest_outdoors"] == "https://custom.url/1"
         assert merged["urls"]["whittler"] == "https://custom.url/2"
-        print("  ✓ User config properly overrides defaults")
+        print("  [PASS] User config properly overrides defaults")
 
     def test_test_mode_affects_paths(self):
         """Test that test_mode changes directory paths correctly"""
@@ -96,14 +96,14 @@ class TestConfigEdgeCases:
 
         test_dir = cm.get_test_downloads_dir()
         assert "test_downloads" in test_dir
-        print(f"  ✓ Test mode path: {test_dir}")
+        print(f"  [PASS] Test mode path: {test_dir}")
 
         cm.config["test_mode"] = False
         cm.config["dropbox_base"] = "D:/Dropbox"
 
         prod_dir = cm.get_output_base_dir()
         assert "Dropbox" in prod_dir
-        print(f"  ✓ Production mode path: {prod_dir}")
+        print(f"  [PASS] Production mode path: {prod_dir}")
 
     def test_retry_attempts_validation(self):
         """Test retry_attempts must be valid integer"""
@@ -117,7 +117,7 @@ class TestConfigEdgeCases:
             is_invalid = not (isinstance(val, int) and val >= 0)
             assert is_invalid, f"Retry {val} should be invalid"
 
-        print("  ✓ Retry attempts validation works correctly")
+        print("  [PASS] Retry attempts validation works correctly")
 
     def test_scheduled_time_format_validation(self):
         """Test scheduled download time format validation"""
@@ -141,7 +141,7 @@ class TestConfigEdgeCases:
                 is_valid = False
             assert not is_valid, f"Time {time_str} should be invalid"
 
-        print("  ✓ Time format validation works correctly")
+        print("  [PASS] Time format validation works correctly")
 
     def test_config_validate_returns_errors_for_missing_required(self):
         """Test that validate_config returns errors for missing required fields"""
@@ -157,7 +157,7 @@ class TestConfigEdgeCases:
         assert any("password" in e.lower() for e in errors), "Should report missing password"
         assert any("cow" in e.lower() for e in errors), "Should report missing cow_password"
 
-        print(f"  ✓ Found {len(errors)} validation errors: {errors}")
+        print(f"  [PASS] Found {len(errors)} validation errors: {errors}")
 
 
 def run_tests():
@@ -187,10 +187,10 @@ def run_tests():
             test()
             passed += 1
         except AssertionError as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
         except Exception as e:
-            print(f"  ✗ {test.__name__}: {e}")
+            print(f"  [FAIL] {test.__name__}: {e}")
             failed += 1
 
     print("=" * 60)

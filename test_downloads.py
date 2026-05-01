@@ -144,9 +144,9 @@ def test_config_paths():
     for folder in ['Global Features', 'WWO SPOTS', 'Promos']:
         path = config.get_global_features_dir().replace('Global Features', folder)
         if Path(path).exists():
-            print(f"✓ {folder} folder exists")
+            print(f"[PASS] {folder} folder exists")
         else:
-            print(f"✗ {folder} folder missing")
+            print(f"[FAIL] {folder} folder missing")
     
     print("\n" + "=" * 50)
 
@@ -188,9 +188,9 @@ def test_all_sources():
     for name in DOWNLOAD_SOURCES.keys():
         try:
             d = create_downloader(name, bm, config)
-            print(f"✓ {name}: OK")
+            print(f"[PASS] {name}: OK")
         except Exception as e:
-            print(f"✗ {name}: {e}")
+            print(f"[FAIL] {name}: {e}")
     
     print("\n" + "=" * 50)
 

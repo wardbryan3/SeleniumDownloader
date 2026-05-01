@@ -20,7 +20,7 @@ def test_set_method():
     cm = ConfigManager()
     cm.set("test_key", "test_value")
     assert cm.get("test_key") == "test_value", "set() failed"
-    print("  ✓ set() works")
+    print("  [PASS] set() works")
 
 def test_save_method():
     """Test that save() method works"""
@@ -31,7 +31,7 @@ def test_save_method():
     result = cm.save()
     assert result is True, "save() returned False"
     assert cm.get("test_save_key") == test_value, "save() didn't persist value"
-    print("  ✓ save() works")
+    print("  [PASS] save() works")
 
 def test_url_config():
     """Test that URLs load from config"""
@@ -40,14 +40,14 @@ def test_url_config():
     urls = cm.get("urls", {})
     assert "northwest_outdoors" in urls, "northwest_outdoors URL key missing"
     assert "whittler" in urls, "whittler URL key missing"
-    print(f"  ✓ northwest_outdoors URL: {urls.get('northwest_outdoors')}")
-    print(f"  ✓ whittler URL: {urls.get('whittler')}")
+    print(f"  [PASS] northwest_outdoors URL: {urls.get('northwest_outdoors')}")
+    print(f"  [PASS] whittler URL: {urls.get('whittler')}")
 
 def test_cow_password_default():
     """Test that cow_password defaults to empty string"""
     print("Testing cow_password default...")
     assert DEFAULT_CONFIG.get("cow_password") == "", f"cow_password should be empty"
-    print("  ✓ cow_password defaults to empty string")
+    print("  [PASS] cow_password defaults to empty string")
 
 def test_url_validation():
     """Test URL validation in DEFAULT_CONFIG"""
@@ -55,7 +55,7 @@ def test_url_validation():
     urls = DEFAULT_CONFIG.get("urls", {})
     assert "YOUR_LINK" in urls.get("northwest_outdoors", ""), "Placeholder URL should be in default"
     assert "YOUR_LINK" in urls.get("whittler", ""), "Placeholder URL should be in default"
-    print("  ✓ Placeholder URLs in DEFAULT_CONFIG detected correctly")
+    print("  [PASS] Placeholder URLs in DEFAULT_CONFIG detected correctly")
 
 def main():
     print("=" * 50)
@@ -74,10 +74,10 @@ def main():
         print("=" * 50)
         return 0
     except AssertionError as e:
-        print(f"\n✗ Test failed: {e}")
+        print(f"\n[FAIL] Test failed: {e}")
         return 1
     except Exception as e:
-        print(f"\n✗ Error: {e}")
+        print(f"\n[FAIL] Error: {e}")
         import traceback
         traceback.print_exc()
         return 1

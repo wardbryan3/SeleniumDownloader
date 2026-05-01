@@ -2,139 +2,87 @@
 
 ## What This Is
 
-Audio Download Manager — a Python desktop app that uses Selenium (Firefox) to download radio show audio files from 5 Dropbox sources and organizes them into Dropbox folders.
+Python desktop app using Selenium (Firefox) to download radio show audio from 5 Dropbox sources.
 
-## Developer Commands
+## Environment
 
+Virtual environment at `.venv/` (gitignored). Use it for all commands:
 ```bash
-python main.py                  # Launch GUI (default)
-python main.py --download-all   # CLI: download from all sources
-python main.py --source "Name"  # CLI: download from one source
-python test_downloads.py        # Run standalone test suite
-python test_detection_standalone.py  # Run download detection test
-python tests/test_config_edge_cases.py  # Config tests
-python tests/test_integration.py        # Integration tests
-python tests/test_scheduler.py          # Scheduler tests
-python tests/test_sources.py            # URL validation tests
-python tests/test_browser_manager.py    # Browser manager tests
+.venv/bin/python3 main.py                         # GUI (default)
+.venv/bin/python3 main.py --download-all          # CLI: all sources
+.venv/bin/python3 main.py --source "Melinda Myers"  # CLI: one source
 ```
 
-No test framework installed — tests are plain Python scripts run directly. No lint/typecheck configured.
+Install dependencies into `.venv/`:
+```bash
+.venv/bin/python3 -m pip install selenium webdriver-manager psutil watchdog pyinstaller
+```
+
+## Commands
+
+```bash
+.venv/bin/python3 test_downloads.py                    # Standalone test suite
+.venv/bin/python3 test_detection_standalone.py         # Download detection test
+.venv/bin/python3 tests/test_config_edge_cases.py      # Config tests
+.venv/bin/python3 tests/test_integration.py            # Integration tests
+.venv/bin/python3 tests/test_scheduler.py              # Scheduler tests
+.venv/bin/python3 tests/test_sources.py                # URL validation tests
+.venv/bin/python3 tests/test_browser_manager.py        # Browser manager tests
+```
+
+No test framework — tests are plain Python scripts run directly. No lint/typecheck configured.
 
 ## Architecture
 
-- **Entry point**: `main.py` — 3 modes: GUI (tkinter), CLI download-all, CLI single-source
-- **Sources**: `sources/` — 5 downloader implementations using factory via `create_downloader(name, browser_mgr, config)`
+- **Entry point**: `main.py` — GUI (tkinter), CLI download-all, CLI single-source
+- **Sources**: `sources/` — 5 downloaders via factory `create_downloader(name, browser_mgr, config)`
 - **Base class**: `sources/base.py` — `BaseDownloader` with `download()` abstract method
-- **Browser**: Firefox only (uses `webdriver-manager` for GeckoDriver auto-install)
-- **Config**: `download_config.json` (gitignored, contains credentials) — auto-created with defaults on first run
-- **GUI**: tkinter with dark theme in `gui.py`
+- **Browser**: Firefox only (`webdriver-manager` for GeckoDriver auto-install)
+- **Config**: `download_config.json` (gitignored, auto-created with defaults)
 
-## Key Directories
+## Gotchas
 
-| Directory | Purpose | Gitignored? |
-|---|---|---|
-| `downloads/` | Test mode output | yes |
-| `browser_downloads/` | Selenium staging dir | yes |
-| `sources/` | Download source implementations | no |
-| `tests/` | Test suite | no |
-
-## Important Conventions & Gotchas
-
-- **Test mode defaults to `True`** — downloads go to `downloads/` not real Dropbox paths
-- **Two download directories**: `browser_downloads/` is the Selenium staging area; `downloads/` (test) or Dropbox paths (prod) are final output
-- **FFmpeg is external** — must be installed on the system separately for audio tag overlay (`download_utils.py`)
-- **Windows-only build**: PyInstaller spec builds `.exe` on Windows CI (`AudioDownloader.spec`)
-- **Source names vs keys**: `DOWNLOAD_SOURCES` maps display names (e.g. `"Melinda Myers"`) to module keys (e.g. `"melinda_myers"`) — always use display names with `create_downloader()`
+- **Test mode defaults `True`** — output goes to `downloads/`, not Dropbox paths
+- **Two download dirs**: `browser_downloads/` is Selenium staging; `downloads/` (test) or Dropbox (prod) is final output
+- **Source names vs keys**: `DOWNLOAD_SOURCES` maps display names (`"Melinda Myers"`) to module keys (`"melinda_myers"`) — use display names with `create_downloader()`
 - **Config merge**: `DEFAULT_CONFIG.copy()` then `.update(saved_config)` — top-level keys only, nested dicts like `urls` are fully replaced
-- **Browser lifecycle**: `BrowserManager` is shared across source downloads; each source gets a fresh `BrowserManager` in CLI mode
-- **Constants use UPPERCASE**: `ALLOWED_EXTENSIONS`, `EXCLUDED_EXTENSIONS`, `EXCLUDED_PREFIXES` in `constants.py` — always reference them with exact uppercase names
+- **Constants use UPPERCASE**: `ALLOWED_EXTENSIONS`, `EXCLUDED_EXTENSIONS`, `EXCLUDED_PREFIXES` in `constants.py`
+- **FFmpeg required**: Must be on system PATH for audio tag overlay (`download_utils.py`)
+- **Windows-only build**: PyInstaller spec builds `.exe` on Windows CI
 
 ## Dependencies
 
 `selenium`, `webdriver-manager`, `psutil`, `watchdog`, `pyinstaller` (+ `ffmpeg` system package)
 
-## CI
+## Adding Sources
 
-GitHub Actions (`.github/workflows/windows_build.yml`): builds Windows exe on push to `main`/`master` and on semver tags. Releases created for tags.
+Register in 4 places:
+1. `sources/<snake_case_name>.py` — inherit `BaseDownloader`, implement `download(update_callback=None) -> bool`
+2. `sources/__init__.py` — import and add to `downloaders` dict in `create_downloader()`
+3. `config.py` — add to `DOWNLOAD_SOURCES` dict
+4. `AudioDownloader.spec` — add to `hiddenimports` (PyInstaller won't auto-discover dynamic imports)
 
-## Config Management
-
-`download_config.json` is gitignored and auto-created from `DEFAULT_CONFIG` on first run. Key fields that users must set:
-
-- **`email`, `password`**: Westwood One login credentials
-- **`cow_password`**: Clear Out West password
-- **`urls`**: Real Dropbox shared links per source (defaults are `YOUR_LINK_HERE` placeholders)
-- **`test_mode`**: Defaults to `True`. When `True`, output goes to `downloads/` subfolder instead of real Dropbox paths. Set to `False` for production.
-- **`scheduled_downloads`**: Controls automated download timing (enabled, schedule_type, time, days)
-
-To update config programmatically, use `ConfigManager`:
-```python
-from config import ConfigManager
-cm = ConfigManager()
-cm.set("email", "user@example.com")
-cm.save()
-```
-
-## Adding New Download Sources
-
-New sources require registration in **4 places**:
-
-1. **Create source module**: `sources/<snake_case_name>.py` with a class inheriting from `BaseDownloader`, implementing `download(update_callback=None) -> bool`
-
-2. **Register in factory** (`sources/__init__.py`):
-   - Add import: `from .<snake_case_name> import <CamelCaseName>Downloader`
-   - Add to `downloaders` dict in `create_downloader()`: `"Display Name": <CamelCaseName>Downloader`
-
-3. **Register in config** (`config.py`):
-   - Add to `DOWNLOAD_SOURCES` dict: `"Display Name": "snake_case_name"`
-
-4. **Register in PyInstaller spec** (`AudioDownloader.spec`):
-   - Add to `hiddenimports` list: `'sources.<snake_case_name>'`
-   - This is critical — PyInstaller won't auto-discover dynamically imported source modules, and the exe will crash on that source.
-
-After adding a source, verify:
+Verify:
 ```bash
 python -c "from sources import create_downloader; from browser_manager import BrowserManager; from config import ConfigManager; bm = BrowserManager(ConfigManager()); d = create_downloader('Display Name', bm, ConfigManager()); print('OK')"
 ```
 
 ## Release Workflow
 
-To publish a new version:
+1. Bump `__version__` in `__init__.py` (semver: `1.1.9`)
+2. `git commit -m "chore: bump version to X.Y.Z"`
+3. `git tag X.Y.Z && git push origin main --tags`
 
-1. **Bump version** in `__init__.py`:
-   ```python
-   __version__ = "1.1.9"  # Use semver (major.minor.patch)
-   ```
+CI (`.github/workflows/windows_build.yml`) builds `dist/AudioDownloader.exe` and creates a GitHub Release.
 
-2. **Commit** the change:
-   ```bash
-   git add __init__.py
-   git commit -m "chore: bump version to 1.1.9"
-   ```
+`update_checker.py` compares `__version__` against `wardbryan3/SeleniumDownloader/releases/latest`.
 
-3. **Create and push a semver tag**:
-   ```bash
-   git tag 1.1.9
-   git push origin main --tags
-   ```
-
-4. **CI does the rest**: The tag triggers `.github/workflows/windows_build.yml` which:
-   - Builds `dist/AudioDownloader.exe` via PyInstaller
-   - Creates a GitHub Release at `wardbryan3/SeleniumDownloader/releases` with the exe attached
-
-The app's `update_checker.py` queries `wardbryan3/SeleniumDownloader/releases/latest`, extracts the `tag_name`, compares it against `__version__` using `parse_version()`, and notifies users of available updates in the GUI.
-
-## Updating the Executable Locally
-
-For local builds (before pushing):
+## Local Build
 
 ```bash
 pyinstaller --clean AudioDownloader.spec
 ```
 
-Output: `dist/AudioDownloader.exe`
+Keep `hiddenimports` in sync when adding modules — PyInstaller cannot detect runtime-imported modules.
 
-The `.spec` file's `hiddenimports` list must be kept in sync whenever modules are added or removed. If a new module is added (not in `sources/`), add it to `hiddenimports` — PyInstaller cannot detect runtime-imported modules like those in the factory pattern.
-
-The `AudioDownloader.exe` reads config from the same directory it's placed in (`download_config.json` auto-created on first run). It does not bundle FFmpeg — FFmpeg must be separately available on the user's system PATH for tag overlay to work.
+Executable reads config from its own directory. Does not bundle FFmpeg.
