@@ -21,13 +21,6 @@ else:
 
 CONFIG_FILE = str(APP_DIR / "download_config.json")
 
-def get_default_dropbox_path() -> str:
-    """Get platform-appropriate default Dropbox path"""
-    if sys.platform == "win32":
-        return r"D:\users\935ko\Dropbox"
-    else:
-        return str(Path.home() / "Dropbox")
-
 def get_default_browser_download_dir() -> str:
     """Get platform-appropriate browser download directory"""
     project_root = Path(__file__).parent
@@ -36,28 +29,14 @@ def get_default_browser_download_dir() -> str:
     else:
         return str(project_root / "browser_downloads")
 
-DROPBOX_BASE = get_default_dropbox_path()
-GLOBAL_FEATURES_PATH = os.path.join(DROPBOX_BASE, "Global Features")
-WWO_SPOTS_PATH = os.path.join(DROPBOX_BASE, "WWO SPOTS")
-PROMOS_PATH = os.path.join(DROPBOX_BASE, "Promos")
-TAG_FILE_PATH = os.path.join(PROMOS_PATH, "NWKORVTAG.wav")
 BROWSER_DOWNLOAD_DIR = get_default_browser_download_dir()
 
-TEST_MODE_DEFAULT = True
-
 DEFAULT_CONFIG = {
-    "test_mode": TEST_MODE_DEFAULT,
-    "test_downloads_dir": "downloads",
-    "dropbox_base": DROPBOX_BASE,
-    "global_features_dir": GLOBAL_FEATURES_PATH,
-    "wwo_spots_dir": WWO_SPOTS_PATH,
-    "promos_dir": PROMOS_PATH,
-    "tag_file": TAG_FILE_PATH,
+    "output_dir": "downloads",
+    "tag_file": "",
     "browser_download_dir": BROWSER_DOWNLOAD_DIR,
     "auto_close_browser": True,
     "retry_attempts": 2,
-    "email": "",
-    "password": "",
     "cow_password": "",
     "urls": {
         "northwest_outdoors": "https://www.dropbox.com/scl/fo/YOUR_LINK_HERE",
@@ -87,7 +66,6 @@ DOWNLOAD_SOURCES = {
     "Melinda Myers": "melinda_myers",
     "Northwest Outdoors": "northwest_outdoors",
     "Whittler": "whittler",
-    "Westwood One": "westwood_one",
     "Clear Out West": "clear_out_west"
 }
 
@@ -110,10 +88,6 @@ class ConfigManager:
                     merged_config = DEFAULT_CONFIG.copy()
                     merged_config.update(saved_config)
                     logger.info("Configuration loaded successfully")
-                    
-                    test_mode = merged_config.get("test_mode", TEST_MODE_DEFAULT)
-                    logger.info(f"Test mode: {test_mode}")
-                    
                     return merged_config
         except Exception as e:
             logger.error(f"Error loading config: {e}")
@@ -142,45 +116,25 @@ class ConfigManager:
             logger.error(f"Error saving config: {e}")
             return False
     
-    def is_test_mode(self) -> bool:
-        """Check if running in test mode"""
-        return self.config.get("test_mode", TEST_MODE_DEFAULT)
-    
-    def get_test_downloads_dir(self) -> str:
-        """Get the local test downloads directory"""
-        base = Path.cwd() / self.config.get("test_downloads_dir", "downloads")
-        return str(base)
-    
     def get_output_base_dir(self) -> str:
-        """Get base output directory (test or production)"""
-        if self.is_test_mode():
-            return self.get_test_downloads_dir()
-        else:
-            return self.config.get("dropbox_base", DROPBOX_BASE)
+        """Get base output directory"""
+        output_dir = self.config.get("output_dir", "downloads")
+        p = Path(output_dir)
+        if not p.is_absolute():
+            p = Path.cwd() / p
+        return str(p)
     
-    def _get_dir_for_mode(self, relative_path: str) -> str:
-        """Get a directory path, adjusted for test mode"""
-        if self.is_test_mode():
-            return os.path.join(self.get_test_downloads_dir(), relative_path)
-        else:
-            return os.path.join(self.config.get("dropbox_base", DROPBOX_BASE), relative_path)
+    def _get_subdir(self, relative_path: str) -> str:
+        """Get a subdirectory under the output directory"""
+        return os.path.join(self.get_output_base_dir(), relative_path)
     
     def ensure_folders(self) -> bool:
         """Ensure all required output folders exist"""
-        if self.is_test_mode():
-            folders = [
-                self.get_test_downloads_dir(),
-                self.get_global_features_dir(),
-                self.get_wwo_spots_dir(),
-                self.get_promos_dir(),
-            ]
-        else:
-            folders = [
-                self.config.get("dropbox_base"),
-                self.config.get("global_features_dir"),
-                self.config.get("wwo_spots_dir"),
-                self.config.get("promos_dir"),
-            ]
+        folders = [
+            self.get_output_base_dir(),
+            self.get_global_features_dir(),
+            self.get_promos_dir(),
+        ]
         
         for folder in folders:
             if folder:
@@ -196,29 +150,14 @@ class ConfigManager:
         errors = []
         config = self.config
         
-        if not config.get("email"):
-            errors.append("Email is required for Westwood One downloads")
-        if not config.get("password"):
-            errors.append("Password is required for Westwood One downloads")
-        
         if not config.get("cow_password"):
             errors.append("COW password is required")
         
-        tag_file = config.get("tag_file")
-        if tag_file and not Path(tag_file).exists():
-            if not self.is_test_mode():
-                errors.append(f"Tag file not found: {tag_file}")
-        
         folders_to_check = [
-            ("test" if self.is_test_mode() else "production", self.get_output_base_dir()),
+            ("Base output", self.get_output_base_dir()),
+            ("Global Features", self.get_global_features_dir()),
+            ("Promos", self.get_promos_dir()),
         ]
-        
-        if self.is_test_mode():
-            folders_to_check.extend([
-                ("Global Features", self.get_global_features_dir()),
-                ("WWO SPOTS", self.get_wwo_spots_dir()),
-                ("Promos", self.get_promos_dir()),
-            ])
         
         for name, folder in folders_to_check:
             if folder:
@@ -264,26 +203,19 @@ class ConfigManager:
         return self.config.get("scheduled_downloads", {})
     
     def get_global_features_dir(self) -> str:
-        """Get the Global Features directory (test or production)"""
-        return self._get_dir_for_mode("Global Features")
-    
-    def get_wwo_spots_dir(self) -> str:
-        """Get the WWO SPOTS directory (test or production)"""
-        return self._get_dir_for_mode("WWO SPOTS")
+        """Get the Global Features directory under the output dir"""
+        return self._get_subdir("Global Features")
     
     def get_promos_dir(self) -> str:
-        """Get the Promos directory (test or production)"""
-        return self._get_dir_for_mode("Promos")
+        """Get the Promos directory under the output dir"""
+        return self._get_subdir("Promos")
     
     def get_tag_file(self) -> str:
-        """Get the audio tag file path (test or production)"""
-        if self.is_test_mode():
-            config_tag_file = self.config.get("tag_file")
-            if config_tag_file:
-                return config_tag_file
-            tag_name = Path(TAG_FILE_PATH).name
-            return os.path.join(self.get_promos_dir(), tag_name)
-        return self.config.get("tag_file", TAG_FILE_PATH)
+        """Get the audio tag file path"""
+        config_tag_file = self.config.get("tag_file")
+        if config_tag_file:
+            return config_tag_file
+        return os.path.join(self.get_promos_dir(), "NWKORVTAG.wav")
     
     def get_browser_download_dir(self) -> str:
         """Get the dedicated browser download directory"""

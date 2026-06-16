@@ -27,10 +27,9 @@ class TestConfigEdgeCases:
     def test_default_config_has_all_required_keys(self):
         """Test that DEFAULT_CONFIG has all required keys"""
         required_keys = [
-            "test_mode", "test_downloads_dir", "dropbox_base",
-            "global_features_dir", "wwo_spots_dir", "promos_dir",
+            "output_dir",
             "tag_file", "browser_download_dir", "auto_close_browser",
-            "retry_attempts", "email", "password", "cow_password",
+            "retry_attempts", "cow_password",
             "urls", "scheduled_downloads"
         ]
 
@@ -68,8 +67,7 @@ class TestConfigEdgeCases:
     def test_config_merge_user_overrides_defaults(self):
         """Test that user config properly overrides defaults"""
         user_config = {
-            "test_mode": False,
-            "email": "test@test.com",
+            "output_dir": "/custom/path",
             "cow_password": "secret",
             "urls": {
                 "northwest_outdoors": "https://custom.url/1",
@@ -80,30 +78,27 @@ class TestConfigEdgeCases:
         merged = DEFAULT_CONFIG.copy()
         merged.update(user_config)
 
-        assert merged["test_mode"] == False
-        assert merged["email"] == "test@test.com"
+        assert merged["output_dir"] == "/custom/path"
         assert merged["cow_password"] == "secret"
         assert merged["urls"]["northwest_outdoors"] == "https://custom.url/1"
         assert merged["urls"]["whittler"] == "https://custom.url/2"
         print("  ✓ User config properly overrides defaults")
 
-    def test_test_mode_affects_paths(self):
-        """Test that test_mode changes directory paths correctly"""
+    def test_output_dir_affects_paths(self):
+        """Test that output_dir changes directory paths correctly"""
         cm = ConfigManager()
 
-        cm.config["test_mode"] = True
-        cm.config["test_downloads_dir"] = "test_downloads"
+        cm.config["output_dir"] = "/tmp/custom_output"
 
-        test_dir = cm.get_test_downloads_dir()
-        assert "test_downloads" in test_dir
-        print(f"  ✓ Test mode path: {test_dir}")
+        base_dir = cm.get_output_base_dir()
+        assert "/tmp/custom_output" in base_dir
 
-        cm.config["test_mode"] = False
-        cm.config["dropbox_base"] = "D:/Dropbox"
+        gf_dir = cm.get_global_features_dir()
+        assert "Global Features" in gf_dir
+        assert "/tmp/custom_output" in gf_dir
 
-        prod_dir = cm.get_output_base_dir()
-        assert "Dropbox" in prod_dir
-        print(f"  ✓ Production mode path: {prod_dir}")
+        print(f"  ✓ Output base: {base_dir}")
+        print(f"  ✓ Global Features: {gf_dir}")
 
     def test_retry_attempts_validation(self):
         """Test retry_attempts must be valid integer"""
@@ -147,14 +142,10 @@ class TestConfigEdgeCases:
         """Test that validate_config returns errors for missing required fields"""
         cm = ConfigManager()
 
-        cm.config["email"] = ""
-        cm.config["password"] = ""
         cm.config["cow_password"] = ""
 
         errors = cm.validate_config()
 
-        assert any("email" in e.lower() for e in errors), "Should report missing email"
-        assert any("password" in e.lower() for e in errors), "Should report missing password"
         assert any("cow" in e.lower() for e in errors), "Should report missing cow_password"
 
         print(f"  ✓ Found {len(errors)} validation errors: {errors}")
@@ -173,7 +164,7 @@ def run_tests():
         tester.test_url_validation_rejects_invalid_urls,
         tester.test_url_validation_accepts_valid_urls,
         tester.test_config_merge_user_overrides_defaults,
-        tester.test_test_mode_affects_paths,
+        tester.test_output_dir_affects_paths,
         tester.test_retry_attempts_validation,
         tester.test_scheduled_time_format_validation,
         tester.test_config_validate_returns_errors_for_missing_required,

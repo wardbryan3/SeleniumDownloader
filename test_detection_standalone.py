@@ -29,17 +29,11 @@ class MockConfigManager:
     def get_global_features_dir(self):
         return str(Path.home() / "downloads" / "Global Features")
     
-    def get_wwo_spots_dir(self):
-        return str(Path.home() / "downloads" / "WWO SPOTS")
-    
     def get_promos_dir(self):
         return str(Path.home() / "downloads" / "Promos")
     
     def get_tag_file(self):
         return str(Path.home() / "downloads" / "Promos" / "tag.wav")
-    
-    def is_test_mode(self):
-        return True
     
     def ensure_folders(self):
         pass

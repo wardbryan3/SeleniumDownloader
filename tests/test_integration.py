@@ -44,7 +44,6 @@ class TestDownloadWorkflow:
             'MelindaMyersDownloader',
             'NorthwestOutdoorsDownloader',
             'WhittlerDownloader',
-            'WestwoodOneDownloader',
             'ClearOutWestDownloader',
         ]
 
@@ -129,29 +128,23 @@ class TestEndToEndScenarios:
         assert is_valid, "URL should be valid"
         print(f"  ✓ Whittler workflow ready with valid URL")
 
-    def test_test_mode_path_workflow(self):
-        """Test test mode vs production mode paths"""
+    def test_output_dir_workflow(self):
+        """Test output directory workflow"""
         from config import ConfigManager
 
         cm = ConfigManager()
 
-        cm.config["test_mode"] = True
-        cm.config["test_downloads_dir"] = "test_downloads"
+        cm.config["output_dir"] = "custom_downloads"
 
-        test_output = cm.get_output_base_dir()
-        assert "test_downloads" in test_output
+        output = cm.get_output_base_dir()
+        assert "custom_downloads" in output
 
-        test_promos = cm.get_promos_dir()
-        assert "test_downloads" in test_promos
+        promos = cm.get_promos_dir()
+        assert "custom_downloads" in promos
+        assert "Promos" in promos
 
-        cm.config["test_mode"] = False
-        cm.config["dropbox_base"] = "D:/Dropbox"
-
-        prod_output = cm.get_output_base_dir()
-        assert "Dropbox" in prod_output
-
-        print(f"  ✓ Test mode: {test_output}")
-        print(f"  ✓ Production mode: {prod_output}")
+        print(f"  ✓ Output dir: {output}")
+        print(f"  ✓ Promos dir: {promos}")
 
     def test_validate_config_workflow(self):
         """Test config validation workflow"""
@@ -159,18 +152,12 @@ class TestEndToEndScenarios:
 
         cm = ConfigManager()
 
-        cm.config["email"] = "test@test.com"
-        cm.config["password"] = "testpass"
         cm.config["cow_password"] = "testcow"
 
         errors = cm.validate_config()
 
-        email_error = any("email" in e.lower() for e in errors)
-        password_error = any("password" in e.lower() for e in errors)
         cow_error = any("cow" in e.lower() for e in errors)
 
-        assert not email_error, "Should not have email error"
-        assert not password_error, "Should not have password error"
         assert not cow_error, "Should not have cow_password error"
 
         print("  ✓ Config validation passes with all required fields")
@@ -253,7 +240,7 @@ def run_tests():
         TestDownloadWorkflow().test_source_initialization,
         TestDownloadWorkflow().test_downloader_has_required_methods,
         TestDownloadWorkflow().test_promo_tag_workflow,
-        TestEndToEndScenarios().test_test_mode_path_workflow,
+        TestEndToEndScenarios().test_output_dir_workflow,
         TestEndToEndScenarios().test_validate_config_workflow,
         TestEndToEndScenarios().test_browser_download_dir_workflow,
         TestErrorHandling().test_invalid_json_handled,

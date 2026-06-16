@@ -15,8 +15,6 @@ try:
     from browser_manager import BrowserManager
     from scheduler import DownloadScheduler
     from sources import create_downloader
-    from update_checker import UpdateChecker
-    from __init__ import __version__
 except ImportError as e:
     print(f"Import error in gui.py: {e}")
     raise
@@ -34,7 +32,6 @@ COLORS = {
     'success': '#4caf50',
     'error': '#f44336',
     'warning': '#ff9800',
-    'test_mode': '#ff9800',
 }
 
 LIGHT_COLORS = {
@@ -63,60 +60,18 @@ class AudioDownloaderGUI:
         self.status_var = tk.StringVar(value="Ready to download")
         self.progress_bar = None
         self.log_text = None
-        self.update_available = False
-        self.latest_version = ""
-        self.update_url = ""
         self.dark_mode = tk.BooleanVar(value=self.config_manager.get("dark_mode", True))
         
         self.setup_gui()
         self.setup_scheduler()
-        self.check_for_updates()
         self.apply_theme()
         
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-    
-    def check_for_updates(self):
-        """Check for updates on startup in background thread"""
-        def check():
-            checker = UpdateChecker(__version__)
-            update_available, version, url, _ = checker.check_for_update()
-            
-            if update_available:
-                self.update_available = True
-                self.latest_version = version
-                self.update_url = url
-                
-                def show_notification():
-                    if messagebox.askyesno(
-                        "Update Available",
-                        f"A new version ({version}) is available!\n\n"
-                        f"You are currently running version {__version__}.\n\n"
-                        f"Would you like to visit the releases page to download it?"
-                    ):
-                        import webbrowser
-                        webbrowser.open(url)
-                
-                self.root.after(0, show_notification)
-        
-        threading.Thread(target=check, daemon=True).start()
     
     def setup_gui(self):
         """Setup the GUI interface"""
         main_frame = ttk.Frame(self.root, padding="15")
         main_frame.pack(fill=tk.BOTH, expand=True)
-        
-        test_mode = self.config_manager.get("test_mode", True)
-        if test_mode:
-            test_banner = tk.Frame(main_frame, bg=COLORS['test_mode'], height=30)
-            test_banner.pack(fill=tk.X, pady=(0, 10))
-            test_banner.pack_propagate(False)
-            tk.Label(
-                test_banner,
-                text="⚠ TEST MODE - Downloads go to local folder, not Dropbox",
-                bg=COLORS['test_mode'],
-                fg='#000',
-                font=("Arial", 10, "bold")
-            ).pack(pady=5)
         
         title_label = ttk.Label(
             main_frame,
@@ -463,7 +418,7 @@ class AudioDownloaderGUI:
         """Show settings window"""
         settings_window = tk.Toplevel(self.root)
         settings_window.title("Settings")
-        settings_window.geometry("500x550")
+        settings_window.geometry("500x450")
         settings_window.transient(self.root)
         settings_window.grab_set()
         
@@ -481,12 +436,10 @@ class AudioDownloaderGUI:
         
         ttk.Label(general_frame, text="⚙ General Settings", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 15))
         
-        test_mode_var = tk.BooleanVar(value=self.config_manager.get("test_mode", True))
-        ttk.Checkbutton(
-            general_frame,
-            text="Test Mode (downloads to local folder, not Dropbox)",
-            variable=test_mode_var
-        ).grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=5)
+        ttk.Label(general_frame, text="Output Directory:").grid(row=1, column=0, sticky=tk.W, pady=10)
+        output_dir_var = tk.StringVar(value=self.config_manager.get("output_dir", "downloads"))
+        ttk.Entry(general_frame, textvariable=output_dir_var, width=30).grid(row=1, column=1, sticky=tk.W, pady=10)
+        ttk.Button(general_frame, text="Browse", command=lambda: output_dir_var.set(filedialog.askdirectory() or output_dir_var.get())).grid(row=1, column=2, padx=5, pady=10)
         
         auto_close_var = tk.BooleanVar(value=self.config_manager.get("auto_close_browser", True))
         ttk.Checkbutton(
@@ -499,60 +452,23 @@ class AudioDownloaderGUI:
         retry_var = tk.StringVar(value=str(self.config_manager.get("retry_attempts", 2)))
         ttk.Spinbox(general_frame, from_=0, to=5, textvariable=retry_var, width=5).grid(row=3, column=1, sticky=tk.W, pady=10)
         
-        ttk.Label(general_frame, text="Test Downloads Dir:").grid(row=4, column=0, sticky=tk.W, pady=10)
-        test_dir_var = tk.StringVar(value=self.config_manager.get("test_downloads_dir", "downloads"))
-        ttk.Entry(general_frame, textvariable=test_dir_var, width=30).grid(row=4, column=1, sticky=tk.W, pady=10)
-        ttk.Button(general_frame, text="Browse", command=lambda: test_dir_var.set(filedialog.askdirectory() or test_dir_var.get())).grid(row=4, column=2, padx=5, pady=10)
+        ttk.Label(paths_frame, text="📁 Paths", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 15))
         
-        ttk.Label(paths_frame, text="📁 Dropbox Paths", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 15))
-        
-        ttk.Label(paths_frame, text="Global Features:").grid(row=1, column=0, sticky=tk.W, pady=8)
-        global_var = tk.StringVar(value=self.config_manager.get("global_features_dir", ""))
-        gf_entry = ttk.Entry(paths_frame, textvariable=global_var, width=35)
-        gf_entry.grid(row=1, column=1, sticky=tk.W, pady=8)
-        ttk.Button(paths_frame, text="...", width=3, command=lambda: global_var.set(filedialog.askdirectory() or global_var.get())).grid(row=1, column=2, padx=5)
-        
-        ttk.Label(paths_frame, text="WWO SPOTS:").grid(row=2, column=0, sticky=tk.W, pady=8)
-        wwo_var = tk.StringVar(value=self.config_manager.get("wwo_spots_dir", ""))
-        ttk.Entry(paths_frame, textvariable=wwo_var, width=35).grid(row=2, column=1, sticky=tk.W, pady=8)
-        ttk.Button(paths_frame, text="...", width=3, command=lambda: wwo_var.set(filedialog.askdirectory() or wwo_var.get())).grid(row=2, column=2, padx=5)
-        
-        ttk.Label(paths_frame, text="Promos:").grid(row=3, column=0, sticky=tk.W, pady=8)
-        promos_var = tk.StringVar(value=self.config_manager.get("promos_dir", ""))
-        ttk.Entry(paths_frame, textvariable=promos_var, width=35).grid(row=3, column=1, sticky=tk.W, pady=8)
-        ttk.Button(paths_frame, text="...", width=3, command=lambda: promos_var.set(filedialog.askdirectory() or promos_var.get())).grid(row=3, column=2, padx=5)
-        
-        ttk.Label(paths_frame, text="Tag File:").grid(row=4, column=0, sticky=tk.W, pady=8)
+        ttk.Label(paths_frame, text="Tag File:").grid(row=1, column=0, sticky=tk.W, pady=8)
         tag_var = tk.StringVar(value=self.config_manager.get("tag_file", ""))
-        ttk.Entry(paths_frame, textvariable=tag_var, width=35).grid(row=4, column=1, sticky=tk.W, pady=8)
-        ttk.Button(paths_frame, text="...", width=3, command=lambda: tag_var.set(filedialog.askopenfilename(filetypes=[("Audio Files", "*.wav *.mp3")]) or tag_var.get())).grid(row=4, column=2, padx=5)
+        ttk.Entry(paths_frame, textvariable=tag_var, width=35).grid(row=1, column=1, sticky=tk.W, pady=8)
+        ttk.Button(paths_frame, text="...", width=3, command=lambda: tag_var.set(filedialog.askopenfilename(filetypes=[("Audio Files", "*.wav *.mp3")]) or tag_var.get())).grid(row=1, column=2, padx=5)
         
         ttk.Label(auth_frame, text="🔐 Authentication", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 15))
-        ttk.Label(auth_frame, text="Required for Westwood One downloads").grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(0, 15))
-        
-        ttk.Label(auth_frame, text="Email:").grid(row=2, column=0, sticky=tk.W, pady=8)
-        email_var = tk.StringVar(value=self.config_manager.get("email", ""))
-        ttk.Entry(auth_frame, textvariable=email_var, width=35).grid(row=2, column=1, sticky=tk.W, pady=8)
-        
-        ttk.Label(auth_frame, text="Password:").grid(row=3, column=0, sticky=tk.W, pady=8)
-        password_var = tk.StringVar(value=self.config_manager.get("password", ""))
-        ttk.Entry(auth_frame, textvariable=password_var, width=35, show="*").grid(row=3, column=1, sticky=tk.W, pady=8)
-        
-        ttk.Label(auth_frame, text="Clear Out West Password:").grid(row=4, column=0, sticky=tk.W, pady=8)
+        ttk.Label(auth_frame, text="Clear Out West Password:").grid(row=1, column=0, sticky=tk.W, pady=8)
         cow_password_var = tk.StringVar(value=self.config_manager.get("cow_password", ""))
-        ttk.Entry(auth_frame, textvariable=cow_password_var, width=35, show="*").grid(row=4, column=1, sticky=tk.W, pady=8)
+        ttk.Entry(auth_frame, textvariable=cow_password_var, width=35, show="*").grid(row=1, column=1, sticky=tk.W, pady=8)
         
         def save_settings():
-            self.config_manager.set("test_mode", test_mode_var.get())
+            self.config_manager.set("output_dir", output_dir_var.get())
             self.config_manager.set("auto_close_browser", auto_close_var.get())
             self.config_manager.set("retry_attempts", int(retry_var.get()))
-            self.config_manager.set("test_downloads_dir", test_dir_var.get())
-            self.config_manager.set("global_features_dir", global_var.get())
-            self.config_manager.set("wwo_spots_dir", wwo_var.get())
-            self.config_manager.set("promos_dir", promos_var.get())
             self.config_manager.set("tag_file", tag_var.get())
-            self.config_manager.set("email", email_var.get())
-            self.config_manager.set("password", password_var.get())
             self.config_manager.set("cow_password", cow_password_var.get())
             self.config_manager.save()
             messagebox.showinfo("Settings", "Settings saved successfully!")

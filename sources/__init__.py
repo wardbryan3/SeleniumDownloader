@@ -5,7 +5,6 @@ Sources package initialization
 from .melinda_myers import MelindaMyersDownloader
 from .northwest_outdoors import NorthwestOutdoorsDownloader
 from .whittler import WhittlerDownloader
-from .westwood_one import WestwoodOneDownloader
 from .clear_out_west import ClearOutWestDownloader
 
 def create_downloader(source_name: str, browser_manager, config_manager):
@@ -14,7 +13,6 @@ def create_downloader(source_name: str, browser_manager, config_manager):
         "Melinda Myers": MelindaMyersDownloader,
         "Northwest Outdoors": NorthwestOutdoorsDownloader,
         "Whittler": WhittlerDownloader,
-        "Westwood One": WestwoodOneDownloader,
         "Clear Out West": ClearOutWestDownloader
     }
     
@@ -28,7 +26,6 @@ __all__ = [
     'MelindaMyersDownloader',
     'NorthwestOutdoorsDownloader',
     'WhittlerDownloader',
-    'WestwoodOneDownloader',
     'ClearOutWestDownloader',
     'create_downloader'
 ]

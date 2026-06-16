@@ -132,16 +132,14 @@ def test_config_paths():
     
     config = ConfigManager()
     
-    print(f"\nTest mode: {config.is_test_mode()}")
-    print(f"Output base: {config.get_output_base_dir()}")
+    print(f"\nOutput base: {config.get_output_base_dir()}")
     print(f"Global Features: {config.get_global_features_dir()}")
-    print(f"WWO SPOTS: {config.get_wwo_spots_dir()}")
     print(f"Promos: {config.get_promos_dir()}")
     print(f"Tag file: {config.get_tag_file()}")
     
     config.ensure_folders()
     
-    for folder in ['Global Features', 'WWO SPOTS', 'Promos']:
+    for folder in ['Global Features', 'Promos']:
         path = config.get_global_features_dir().replace('Global Features', folder)
         if Path(path).exists():
             print(f"✓ {folder} folder exists")

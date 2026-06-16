@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Audio Download Manager — a Python desktop app that uses Selenium (Firefox) to download radio show audio files from 5 Dropbox sources and organizes them into Dropbox folders.
+Audio Download Manager — a Python desktop app that uses Selenium (Firefox) to download radio show audio files from 4 Dropbox sources and organizes them into Dropbox folders.
 
 ## Developer Commands
 
@@ -24,7 +24,7 @@ No test framework installed — tests are plain Python scripts run directly. No 
 ## Architecture
 
 - **Entry point**: `main.py` — 3 modes: GUI (tkinter), CLI download-all, CLI single-source
-- **Sources**: `sources/` — 5 downloader implementations using factory via `create_downloader(name, browser_mgr, config)`
+- **Sources**: `sources/` — 4 downloader implementations using factory via `create_downloader(name, browser_mgr, config)`
 - **Base class**: `sources/base.py` — `BaseDownloader` with `download()` abstract method
 - **Browser**: Firefox only (uses `webdriver-manager` for GeckoDriver auto-install)
 - **Config**: `download_config.json` (gitignored, contains credentials) — auto-created with defaults on first run
@@ -62,17 +62,16 @@ GitHub Actions (`.github/workflows/windows_build.yml`): builds Windows exe on pu
 
 `download_config.json` is gitignored and auto-created from `DEFAULT_CONFIG` on first run. Key fields that users must set:
 
-- **`email`, `password`**: Westwood One login credentials
 - **`cow_password`**: Clear Out West password
 - **`urls`**: Real Dropbox shared links per source (defaults are `YOUR_LINK_HERE` placeholders)
-- **`test_mode`**: Defaults to `True`. When `True`, output goes to `downloads/` subfolder instead of real Dropbox paths. Set to `False` for production.
+- **`output_dir`**: Base output directory (defaults to `downloads/`). All source folders are created under this.
 - **`scheduled_downloads`**: Controls automated download timing (enabled, schedule_type, time, days)
 
 To update config programmatically, use `ConfigManager`:
 ```python
 from config import ConfigManager
 cm = ConfigManager()
-cm.set("email", "user@example.com")
+cm.set("output_dir", "/path/to/output")
 cm.save()
 ```
 
@@ -122,8 +121,6 @@ To publish a new version:
 4. **CI does the rest**: The tag triggers `.github/workflows/windows_build.yml` which:
    - Builds `dist/AudioDownloader.exe` via PyInstaller
    - Creates a GitHub Release at `wardbryan3/SeleniumDownloader/releases` with the exe attached
-
-The app's `update_checker.py` queries `wardbryan3/SeleniumDownloader/releases/latest`, extracts the `tag_name`, compares it against `__version__` using `parse_version()`, and notifies users of available updates in the GUI.
 
 ## Updating the Executable Locally
 

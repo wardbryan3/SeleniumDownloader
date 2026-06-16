@@ -54,7 +54,6 @@ def run_cli_downloads():
     logger.info("=" * 50)
     
     config = ConfigManager()
-    logger.info(f"Test mode: {config.is_test_mode()}")
     logger.info(f"Output directory: {config.get_output_base_dir()}")
     logger.info(f"Browser download dir: {config.get_browser_download_dir()}")
     logger.info("")
