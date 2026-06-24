@@ -30,7 +30,7 @@ class TestConfigEdgeCases:
             "output_dir",
             "tag_file", "browser_download_dir", "auto_close_browser",
             "retry_attempts", "cow_password",
-            "urls", "scheduled_downloads"
+            "urls"
         ]
 
         for key in required_keys:
@@ -114,30 +114,6 @@ class TestConfigEdgeCases:
 
         print("  ✓ Retry attempts validation works correctly")
 
-    def test_scheduled_time_format_validation(self):
-        """Test scheduled download time format validation"""
-        from datetime import datetime
-
-        valid_times = ["00:00", "12:30", "23:59", "06:00"]
-        for time_str in valid_times:
-            try:
-                datetime.strptime(time_str, '%H:%M')
-                is_valid = True
-            except ValueError:
-                is_valid = False
-            assert is_valid, f"Time {time_str} should be valid"
-
-        invalid_times = ["25:00", "12:60", "abc", "12", "12:30:00"]
-        for time_str in invalid_times:
-            try:
-                datetime.strptime(time_str, '%H:%M')
-                is_valid = True
-            except ValueError:
-                is_valid = False
-            assert not is_valid, f"Time {time_str} should be invalid"
-
-        print("  ✓ Time format validation works correctly")
-
     def test_config_validate_returns_errors_for_missing_required(self):
         """Test that validate_config returns errors for missing required fields"""
         cm = ConfigManager()
@@ -166,7 +142,6 @@ def run_tests():
         tester.test_config_merge_user_overrides_defaults,
         tester.test_output_dir_affects_paths,
         tester.test_retry_attempts_validation,
-        tester.test_scheduled_time_format_validation,
         tester.test_config_validate_returns_errors_for_missing_required,
     ]
 

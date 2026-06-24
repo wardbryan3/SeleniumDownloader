@@ -31,8 +31,6 @@ class TestBrowserManager:
                 'start_browser',
                 'close_browser',
                 'get_driver',
-                'get_browser_type',
-                'set_browser_type',
             ]
 
             for method in required_methods:
@@ -43,19 +41,6 @@ class TestBrowserManager:
             print(f"  ✗ Import failed: {e}")
             raise
 
-    def test_browser_type_defaults(self):
-        """Test default browser type settings"""
-        try:
-            from browser_manager import BrowserManager
-            bm = BrowserManager.__new__(BrowserManager)
-
-            default_browser = getattr(bm, 'browser_type', 'chrome')
-            assert default_browser in ['chrome', 'firefox', 'edge'], f"Invalid default: {default_browser}"
-
-            print(f"  ✓ Default browser type: {default_browser}")
-        except Exception as e:
-            print(f"  ✗ Test failed: {e}")
-
     def test_selenium_webdriver_imports(self):
         """Test that Selenium WebDriver can be imported"""
         try:
@@ -65,7 +50,6 @@ class TestBrowserManager:
 
             assert hasattr(webdriver, 'Chrome'), "Should have Chrome webdriver"
             assert hasattr(webdriver, 'Firefox'), "Should have Firefox webdriver"
-            assert hasattr(webdriver, 'Edge'), "Should have Edge webdriver"
 
             print("  ✓ Selenium WebDriver imports successful")
         except ImportError as e:
@@ -77,7 +61,6 @@ class TestBrowserManager:
         try:
             from webdriver_manager.chrome import ChromeDriverManager
             from webdriver_manager.firefox import GeckoDriverManager
-            from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
             print("  ✓ webdriver_manager imports successful")
         except ImportError as e:
@@ -87,23 +70,6 @@ class TestBrowserManager:
 
 class TestBrowserStartup:
     """Test browser startup logic"""
-
-    @patch('browser_manager.webdriver.Chrome')
-    @patch('browser_manager.ChromeDriverManager')
-    def test_start_chrome_browser(self, mock_driver_manager, mock_chrome):
-        """Test Chrome browser startup"""
-        try:
-            from browser_manager import BrowserManager
-
-            mock_driver_manager.return_value.install.return_value = "/path/to/chromedriver"
-            mock_chrome.return_value = Mock()
-
-            bm = BrowserManager.__new__(BrowserManager)
-            bm.browser_type = 'chrome'
-
-            print("  ✓ Chrome browser startup logic works")
-        except Exception as e:
-            print(f"  Note: {e} (expected without full browser setup)")
 
     @patch('browser_manager.webdriver.Firefox')
     @patch('browser_manager.GeckoDriverManager')
@@ -116,26 +82,23 @@ class TestBrowserStartup:
             mock_firefox.return_value = Mock()
 
             bm = BrowserManager.__new__(BrowserManager)
-            bm.browser_type = 'firefox'
 
             print("  ✓ Firefox browser startup logic works")
         except Exception as e:
             print(f"  Note: {e} (expected without full browser setup)")
 
     def test_browser_options_configured(self):
-        """Test that browser options can be configured"""
+        """Test that Firefox browser options can be configured"""
         try:
-            from selenium.webdriver.chrome.options import Options
-            from selenium.webdriver.firefox.options import Options as FirefoxOptions
+            from selenium.webdriver.firefox.options import Options
 
-            chrome_opts = Options()
-            chrome_opts.add_argument("--headless")
-            chrome_opts.add_argument("--no-sandbox")
-            chrome_opts.add_argument("--disable-dev-shm-usage")
+            opts = Options()
+            opts.set_preference("browser.download.folderList", 2)
+            opts.set_preference("browser.download.dir", "/tmp/downloads")
 
-            assert "--headless" in chrome_opts.arguments
+            assert opts.preferences["browser.download.folderList"] == 2
 
-            print("  ✓ Browser options configuration works")
+            print("  ✓ Firefox browser options configuration works")
         except ImportError as e:
             print(f"  ✗ Import failed: {e}")
             raise
@@ -182,7 +145,6 @@ def run_tests():
     tests = [
         tester.test_browser_manager_imports,
         tester.test_browser_manager_has_required_methods,
-        tester.test_browser_type_defaults,
         tester.test_selenium_webdriver_imports,
         tester.test_webdriver_manager_imports,
         startup_tester.test_browser_options_configured,

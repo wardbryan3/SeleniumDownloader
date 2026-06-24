@@ -6,14 +6,12 @@ import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext, filedialog
 import threading
 import time
-import sys
 import logging
 from datetime import datetime
 
 try:
     from config import ConfigManager, DOWNLOAD_SOURCES
     from browser_manager import BrowserManager
-    from scheduler import DownloadScheduler
     from sources import create_downloader
 except ImportError as e:
     print(f"Import error in gui.py: {e}")
@@ -22,23 +20,23 @@ except ImportError as e:
 logger = logging.getLogger(__name__)
 
 COLORS = {
-    'dark_bg': '#1e1e1e',
-    'dark_frame': '#2d2d2d',
-    'dark_button': '#3c3c3c',
-    'dark_button_hover': '#4a4a4a',
-    'light_text': '#e0e0e0',
+    'bg': '#181818',
+    'surface': '#242424',
+    'button': '#2e2e2e',
+    'button_hover': '#3c3c3c',
+    'button_active': '#4a4a4a',
+    'light_text': '#f0f0f0',
     'dim_text': '#a0a0a0',
-    'accent': '#0078d4',
-    'success': '#4caf50',
-    'error': '#f44336',
-    'warning': '#ff9800',
-}
-
-LIGHT_COLORS = {
-    'bg': '#f0f0f0',
-    'frame': '#ffffff',
-    'text': '#000000',
-    'button': '#e0e0e0',
+    'accent': '#0ea5e9',
+    'success': '#22c55e',
+    'error': '#ef4444',
+    'warning': '#f59e0b',
+    'tab_bg': '#242424',
+    'tab_selected': '#181818',
+    'tab_active': '#2e2e2e',
+    'border': '#3a3a3a',
+    'trough': '#181818',
+    'indicator': '#0ea5e9',
 }
 
 class AudioDownloaderGUI:
@@ -52,19 +50,14 @@ class AudioDownloaderGUI:
         self.config_manager = ConfigManager()
         self.browser_manager = BrowserManager(self.config_manager)
         
-        self.scheduler = DownloadScheduler(
-            self.config_manager,
-            self.run_all_downloads_silent
-        )
+        self._download_lock = threading.Lock()
         
         self.status_var = tk.StringVar(value="Ready to download")
         self.progress_bar = None
         self.log_text = None
-        self.dark_mode = tk.BooleanVar(value=self.config_manager.get("dark_mode", True))
         
         self.setup_gui()
-        self.setup_scheduler()
-        self.apply_theme()
+        self.apply_dark_theme()
         
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
     
@@ -73,21 +66,42 @@ class AudioDownloaderGUI:
         main_frame = ttk.Frame(self.root, padding="15")
         main_frame.pack(fill=tk.BOTH, expand=True)
         
+        header_frame = ttk.Frame(main_frame)
+        header_frame.pack(fill=tk.X, pady=(0, 15))
+        
         title_label = ttk.Label(
-            main_frame,
-            text="📥 Audio Download Manager",
-            font=("Arial", 16, "bold")
+            header_frame,
+            text="Audio Download Manager",
+            font=("Arial", 16, "bold"),
+            anchor='center'
         )
-        title_label.pack(pady=(0, 15))
+        title_label.pack(fill=tk.X)
+        
+        settings_btn = ttk.Button(
+            header_frame,
+            text="\u2699",
+            command=self.show_settings,
+            width=3,
+            style='Toolbutton'
+        )
+        settings_btn.place(relx=1.0, rely=0.5, x=-5, anchor='e')
         
         all_btn = ttk.Button(
             main_frame,
-            text="⬇ Download All",
+            text="Download Global Features",
             command=self.run_all_downloads,
             width=30
         )
-        all_btn.pack(pady=(0, 20))
-        
+        all_btn.pack(pady=(0, 5))
+
+        promo_btn = ttk.Button(
+            main_frame,
+            text="Download Promo",
+            command=self.create_download_handler("Download Promo"),
+            width=30
+        )
+        promo_btn.pack(pady=(0, 20))
+
         sources_label = ttk.Label(
             main_frame,
             text="Downloads:",
@@ -102,39 +116,11 @@ class AudioDownloaderGUI:
         for i, source_name in enumerate(sources):
             btn = ttk.Button(
                 sources_frame,
-                text=f"📁 {source_name}",
+                text=f"{source_name}",
                 command=self.create_download_handler(source_name),
                 width=35
             )
             btn.pack(pady=3)
-        
-        buttons_frame = ttk.Frame(main_frame)
-        buttons_frame.pack(pady=(0, 15))
-        
-        settings_btn = ttk.Button(
-            buttons_frame,
-            text="⚙ Settings",
-            command=self.show_settings,
-            width=15
-        )
-        settings_btn.pack(side=tk.LEFT, padx=5)
-        
-        scheduler_btn = ttk.Button(
-            buttons_frame,
-            text="🕐 Scheduler",
-            command=self.show_scheduler_window,
-            width=15
-        )
-        scheduler_btn.pack(side=tk.LEFT, padx=5)
-        
-        dark_toggle = ttk.Checkbutton(
-            buttons_frame,
-            text="🌙 Dark",
-            variable=self.dark_mode,
-            command=self.toggle_dark_mode,
-            style='Switch.TCheckbutton'
-        )
-        dark_toggle.pack(side=tk.LEFT, padx=15)
         
         progress_frame = ttk.Frame(main_frame)
         progress_frame.pack(fill=tk.X, pady=(0, 5))
@@ -162,52 +148,116 @@ class AudioDownloaderGUI:
             log_frame,
             height=10,
             width=70,
-            wrap=tk.WORD
+            wrap=tk.WORD,
+            bg=COLORS['surface'],
+            fg=COLORS['light_text'],
+            insertbackground=COLORS['light_text'],
+            relief='flat'
         )
         self.log_text.pack(fill=tk.BOTH, expand=True)
         self.log_text.config(state=tk.DISABLED)
     
-    def toggle_dark_mode(self):
-        """Toggle dark mode"""
-        self.config_manager.set("dark_mode", self.dark_mode.get())
-        self.apply_theme()
-    
-    def apply_theme(self):
-        """Apply dark or light theme using ttk.Style"""
+    def apply_dark_theme(self):
+        """Apply dark theme using ttk.Style"""
         style = ttk.Style()
-        
-        if self.dark_mode.get():
-            style.theme_use('clam')
-            style.configure('.', background=COLORS['dark_bg'])
-            style.configure('.', foreground=COLORS['light_text'])
-            style.configure('TFrame', background=COLORS['dark_bg'])
-            style.configure('TLabelframe', background=COLORS['dark_bg'])
-            style.configure('TLabelframe.Label', background=COLORS['dark_bg'], foreground=COLORS['light_text'])
-            style.configure('TLabel', background=COLORS['dark_bg'], foreground=COLORS['light_text'])
-            style.configure('TButton', background=COLORS['dark_button'], foreground=COLORS['light_text'])
-            style.map('TButton', background=[('active', COLORS['dark_button_hover'])])
-            style.configure('TCheckbutton', background=COLORS['dark_bg'], foreground=COLORS['light_text'])
-            style.configure('TRadiobutton', background=COLORS['dark_bg'], foreground=COLORS['light_text'])
-            style.configure('TEntry', fieldbackground=COLORS['dark_frame'], foreground=COLORS['light_text'])
-            self.root.configure(bg=COLORS['dark_bg'])
-        else:
-            style.theme_use('default')
-            style.configure('.', background='SystemButtonFace')
-            style.configure('TFrame', background='SystemButtonFace')
-            style.configure('TLabelframe', background='SystemButtonFace')
-            style.configure('TLabelframe.Label', background='SystemButtonFace')
-            style.configure('TLabel', background='SystemButtonFace')
-            style.configure('TButton', background='SystemButtonFace')
-            style.configure('TCheckbutton', background='SystemButtonFace')
-            style.configure('TRadiobutton', background='SystemButtonFace')
-            style.configure('TEntry', fieldbackground='white')
-            self.root.configure(bg='SystemButtonFace')
-    
-    def setup_scheduler(self):
-        """Setup and start the scheduler"""
-        self.scheduler.update_from_config()
-        self.scheduler.start()
-        self.log_message("Scheduler started")
+        style.theme_use('clam')
+
+        style.configure('.', background=COLORS['bg'], foreground=COLORS['light_text'])
+
+        style.configure('TFrame', background=COLORS['bg'])
+        style.configure('TLabelframe', background=COLORS['bg'])
+        style.configure('TLabelframe.Label', background=COLORS['bg'], foreground=COLORS['light_text'])
+        style.configure('TLabel', background=COLORS['bg'], foreground=COLORS['light_text'])
+
+        style.configure(
+            'TButton',
+            background=COLORS['button'],
+            foreground=COLORS['light_text'],
+            bordercolor=COLORS['border'],
+            lightcolor=COLORS['button'],
+            darkcolor=COLORS['button'],
+            padding=6
+        )
+        style.map(
+            'TButton',
+            background=[('active', COLORS['button_hover']), ('pressed', COLORS['button_active'])],
+            foreground=[('active', COLORS['light_text']), ('pressed', COLORS['light_text'])],
+            lightcolor=[('active', COLORS['button_hover']), ('pressed', COLORS['button_active'])],
+            darkcolor=[('active', COLORS['button_hover']), ('pressed', COLORS['button_active'])]
+        )
+
+        style.configure(
+            'TNotebook',
+            background=COLORS['bg'],
+            bordercolor=COLORS['border'],
+            tabmargins=[2, 5, 2, 0]
+        )
+        style.configure(
+            'TNotebook.Tab',
+            background=COLORS['tab_bg'],
+            foreground=COLORS['light_text'],
+            padding=[10, 4],
+            bordercolor=COLORS['border']
+        )
+        style.map(
+            'TNotebook.Tab',
+            background=[('selected', COLORS['tab_selected']), ('active', COLORS['tab_active'])],
+            foreground=[('selected', COLORS['light_text']), ('active', COLORS['light_text'])]
+        )
+
+        style.configure('TCheckbutton', background=COLORS['bg'], foreground=COLORS['light_text'], indicatorcolor=COLORS['surface'])
+        style.map('TCheckbutton', indicatorcolor=[('selected', COLORS['accent']), ('active', COLORS['button_hover'])])
+        style.configure('TRadiobutton', background=COLORS['bg'], foreground=COLORS['light_text'], indicatorcolor=COLORS['surface'])
+        style.map('TRadiobutton', indicatorcolor=[('selected', COLORS['accent']), ('active', COLORS['button_hover'])])
+
+        style.configure(
+            'TEntry',
+            fieldbackground=COLORS['surface'],
+            foreground=COLORS['light_text'],
+            insertcolor=COLORS['light_text'],
+            bordercolor=COLORS['border'],
+            lightcolor=COLORS['border'],
+            darkcolor=COLORS['border']
+        )
+
+        style.configure(
+            'TSpinbox',
+            fieldbackground=COLORS['surface'],
+            foreground=COLORS['light_text'],
+            insertcolor=COLORS['light_text'],
+            bordercolor=COLORS['border'],
+            lightcolor=COLORS['border'],
+            darkcolor=COLORS['border'],
+            arrowcolor=COLORS['light_text']
+        )
+
+        style.configure(
+            'TProgressbar',
+            background=COLORS['accent'],
+            troughcolor=COLORS['trough'],
+            bordercolor=COLORS['bg'],
+            lightcolor=COLORS['accent'],
+            darkcolor=COLORS['accent']
+        )
+
+        style.configure(
+            'TCombobox',
+            fieldbackground=COLORS['surface'],
+            foreground=COLORS['light_text'],
+            background=COLORS['button'],
+            arrowcolor=COLORS['light_text'],
+            bordercolor=COLORS['border'],
+            lightcolor=COLORS['border'],
+            darkcolor=COLORS['border']
+        )
+        style.map(
+            'TCombobox',
+            fieldbackground=[('readonly', COLORS['surface'])],
+            selectbackground=[('readonly', COLORS['accent'])],
+            selectforeground=[('readonly', COLORS['light_text'])]
+        )
+
+        self.root.configure(bg=COLORS['bg'])
     
     def log_message(self, message: str):
         """Add message to log viewer"""
@@ -244,13 +294,13 @@ class AudioDownloaderGUI:
                 try:
                     success = self.download_with_retry(source_name)
                     if success:
-                        self.status_var.set(f"✓ {source_name} completed!")
-                        self.log_message(f"✓ {source_name} completed successfully")
+                        self.status_var.set(f"Done - {source_name} completed!")
+                        self.log_message(f"Done - {source_name} completed successfully")
                     else:
-                        self.status_var.set(f"✗ {source_name} failed")
-                        self.log_message(f"✗ {source_name} download failed")
+                        self.status_var.set(f"FAIL - {source_name} failed")
+                        self.log_message(f"FAIL - {source_name} download failed")
                 except Exception as e:
-                    self.status_var.set(f"✗ {source_name} error")
+                    self.status_var.set(f"FAIL - {source_name} error")
                     self.log_message(f"Error in {source_name}: {str(e)}")
                 finally:
                     self.root.after(2000, lambda: self.progress_bar.configure(value=0))
@@ -263,23 +313,30 @@ class AudioDownloaderGUI:
         """Wrapper function to automatically retry failed downloads"""
         max_retries = self.config_manager.get("retry_attempts", 2)
         
-        downloader = create_downloader(source_name, self.browser_manager, self.config_manager)
+        if not self._download_lock.acquire(blocking=False):
+            self.log_message(f"Another download in progress, skipping {source_name}")
+            return False
         
-        for attempt in range(max_retries + 1):
-            try:
-                success = downloader.download(self.update_progress)
-                if success:
-                    return True
-                elif attempt < max_retries:
-                    self.log_message(f"↻ Retrying {source_name} (attempt {attempt + 1})...")
-                    time.sleep(3)
-            except Exception as e:
-                if attempt < max_retries:
-                    self.log_message(f"↻ Error in {source_name}, retrying... ({str(e)})")
-                    time.sleep(3)
-        
-        self.log_message(f"✗ {source_name} failed after {max_retries + 1} attempts")
-        return False
+        try:
+            downloader = create_downloader(source_name, self.browser_manager, self.config_manager)
+            
+            for attempt in range(max_retries + 1):
+                try:
+                    success = downloader.download(self.update_progress)
+                    if success:
+                        return True
+                    elif attempt < max_retries:
+                        self.log_message(f"Retrying {source_name} (attempt {attempt + 1})...")
+                        time.sleep(3)
+                except Exception as e:
+                    if attempt < max_retries:
+                        self.log_message(f"Error in {source_name}, retrying... ({str(e)})")
+                        time.sleep(3)
+            
+            self.log_message(f"{source_name} failed after {max_retries + 1} attempts")
+            return False
+        finally:
+            self._download_lock.release()
     
     def run_all_downloads(self):
         """Run all downloads with progress"""
@@ -306,29 +363,6 @@ class AudioDownloaderGUI:
         
         threading.Thread(target=download_all_thread, daemon=True).start()
     
-    def run_all_downloads_silent(self):
-        """Run all downloads without showing progress dialogs (for scheduler)"""
-        def download_all_thread():
-            sources = list(DOWNLOAD_SOURCES.keys())
-            success_count = 0
-            total_count = len(sources)
-            
-            for source_name in sources:
-                try:
-                    downloader = create_downloader(source_name, self.browser_manager, self.config_manager)
-                    success = downloader.download()
-                    if success:
-                        success_count += 1
-                        self.log_message(f"✓ {source_name} completed")
-                    else:
-                        self.log_message(f"✗ {source_name} failed")
-                except Exception as e:
-                    self.log_message(f"✗ Error in {source_name}: {e}")
-            
-            self.log_message(f"Scheduled downloads: {success_count}/{total_count} successful")
-        
-        threading.Thread(target=download_all_thread, daemon=True).start()
-    
     def show_summary_popup(self, success_count: int, total_count: int, failed_list: list):
         """Show a summary when downloads complete"""
         summary_window = tk.Toplevel(self.root)
@@ -336,14 +370,15 @@ class AudioDownloaderGUI:
         summary_window.geometry("400x250")
         summary_window.transient(self.root)
         summary_window.grab_set()
+        summary_window.configure(bg=COLORS['bg'])
         
         if failed_list:
             message = f"Completed: {success_count}/{total_count} downloads\n\nFailed:\n" + "\n".join(f"• {item}" for item in failed_list)
-            icon = "⚠️"
+            icon = "Warning:"
             title = "Downloads Partially Completed"
         else:
             message = f"All {total_count} downloads completed successfully!"
-            icon = "✅"
+            icon = "Success"
             title = "Downloads Completed"
         
         ttk.Label(summary_window, text=icon, font=("Arial", 24)).pack(pady=10)
@@ -351,76 +386,14 @@ class AudioDownloaderGUI:
         ttk.Label(summary_window, text=message, wraplength=350).pack(pady=10, padx=20)
         ttk.Button(summary_window, text="OK", command=summary_window.destroy).pack(pady=10)
     
-    def show_scheduler_window(self):
-        """Show scheduler configuration window"""
-        scheduler_window = tk.Toplevel(self.root)
-        scheduler_window.title("Scheduler Configuration")
-        scheduler_window.geometry("450x400")
-        scheduler_window.transient(self.root)
-        scheduler_window.grab_set()
-        
-        main_frame = ttk.Frame(scheduler_window, padding="20")
-        main_frame.pack(fill=tk.BOTH, expand=True)
-        
-        ttk.Label(main_frame, text="🕐 Download Scheduler", font=("Arial", 14, "bold")).pack(pady=(0, 20))
-        
-        sched_enabled = tk.BooleanVar(value=self.config_manager.get("scheduled_downloads", {}).get("enabled", False))
-        ttk.Checkbutton(
-            main_frame,
-            text="Enable scheduled downloads",
-            variable=sched_enabled
-        ).pack(anchor=tk.W, pady=5)
-        
-        sched_type = tk.StringVar(value=self.config_manager.get("scheduled_downloads", {}).get("schedule_type", "daily"))
-        type_frame = ttk.Frame(main_frame)
-        type_frame.pack(fill=tk.X, pady=10)
-        ttk.Label(type_frame, text="Schedule:").pack(side=tk.LEFT)
-        ttk.Radiobutton(type_frame, text="Daily", variable=sched_type, value="daily").pack(side=tk.LEFT, padx=10)
-        ttk.Radiobutton(type_frame, text="Weekly", variable=sched_type, value="weekly").pack(side=tk.LEFT)
-        
-        time_frame = ttk.Frame(main_frame)
-        time_frame.pack(fill=tk.X, pady=10)
-        ttk.Label(time_frame, text="Time (24h):").pack(side=tk.LEFT)
-        time_var = tk.StringVar(value=self.config_manager.get("scheduled_downloads", {}).get("time", "06:00"))
-        ttk.Entry(time_frame, textvariable=time_var, width=8).pack(side=tk.LEFT, padx=10)
-        
-        days_frame = ttk.LabelFrame(main_frame, text="Days (for weekly)", padding="10")
-        days_frame.pack(fill=tk.X, pady=10)
-        
-        days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-        saved_days = self.config_manager.get("scheduled_downloads", {}).get("days", [])
-        day_vars = {}
-        for i, day in enumerate(days):
-            day_vars[day] = tk.BooleanVar(value=day in saved_days)
-            ttk.Checkbutton(days_frame, text=day[:3], variable=day_vars[day]).pack(side=tk.LEFT, padx=5)
-        
-        def save_scheduler():
-            selected_days = [day for day, var in day_vars.items() if var.get()]
-            sched_config = {
-                "enabled": sched_enabled.get(),
-                "schedule_type": sched_type.get(),
-                "time": time_var.get(),
-                "days": selected_days,
-                "download_all": True,
-                "selected_sources": []
-            }
-            self.config_manager.set("scheduled_downloads", sched_config)
-            self.scheduler.update_from_config()
-            messagebox.showinfo("Scheduler", "Schedule saved successfully!")
-            scheduler_window.destroy()
-        
-        btn_frame = ttk.Frame(main_frame)
-        btn_frame.pack(pady=20)
-        ttk.Button(btn_frame, text="Save", command=save_scheduler).pack(side=tk.LEFT, padx=10)
-        ttk.Button(btn_frame, text="Cancel", command=scheduler_window.destroy).pack(side=tk.LEFT)
-    
     def show_settings(self):
         """Show settings window"""
         settings_window = tk.Toplevel(self.root)
         settings_window.title("Settings")
-        settings_window.geometry("500x450")
+        settings_window.geometry("550x550")
         settings_window.transient(self.root)
         settings_window.grab_set()
+        settings_window.configure(bg=COLORS['bg'])
         
         notebook = ttk.Notebook(settings_window)
         notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -434,7 +407,10 @@ class AudioDownloaderGUI:
         auth_frame = ttk.Frame(notebook, padding="15")
         notebook.add(auth_frame, text="Auth")
         
-        ttk.Label(general_frame, text="⚙ General Settings", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 15))
+        urls_frame = ttk.Frame(notebook, padding="15")
+        notebook.add(urls_frame, text="URLs")
+        
+        ttk.Label(general_frame, text="General Settings", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 15))
         
         ttk.Label(general_frame, text="Output Directory:").grid(row=1, column=0, sticky=tk.W, pady=10)
         output_dir_var = tk.StringVar(value=self.config_manager.get("output_dir", "downloads"))
@@ -452,17 +428,45 @@ class AudioDownloaderGUI:
         retry_var = tk.StringVar(value=str(self.config_manager.get("retry_attempts", 2)))
         ttk.Spinbox(general_frame, from_=0, to=5, textvariable=retry_var, width=5).grid(row=3, column=1, sticky=tk.W, pady=10)
         
-        ttk.Label(paths_frame, text="📁 Paths", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 15))
+        ttk.Label(paths_frame, text="Paths", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 15))
         
         ttk.Label(paths_frame, text="Tag File:").grid(row=1, column=0, sticky=tk.W, pady=8)
         tag_var = tk.StringVar(value=self.config_manager.get("tag_file", ""))
         ttk.Entry(paths_frame, textvariable=tag_var, width=35).grid(row=1, column=1, sticky=tk.W, pady=8)
         ttk.Button(paths_frame, text="...", width=3, command=lambda: tag_var.set(filedialog.askopenfilename(filetypes=[("Audio Files", "*.wav *.mp3")]) or tag_var.get())).grid(row=1, column=2, padx=5)
+
+        ttk.Label(paths_frame, text="Browser Download Dir:").grid(row=2, column=0, sticky=tk.W, pady=8)
+        browser_download_dir_var = tk.StringVar(value=self.config_manager.get("browser_download_dir", ""))
+        ttk.Entry(paths_frame, textvariable=browser_download_dir_var, width=35).grid(row=2, column=1, sticky=tk.W, pady=8)
+        ttk.Button(paths_frame, text="Browse", command=lambda: browser_download_dir_var.set(filedialog.askdirectory() or browser_download_dir_var.get())).grid(row=2, column=2, padx=5)
         
-        ttk.Label(auth_frame, text="🔐 Authentication", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 15))
+        ttk.Label(auth_frame, text="Authentication", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 15))
         ttk.Label(auth_frame, text="Clear Out West Password:").grid(row=1, column=0, sticky=tk.W, pady=8)
         cow_password_var = tk.StringVar(value=self.config_manager.get("cow_password", ""))
         ttk.Entry(auth_frame, textvariable=cow_password_var, width=35, show="*").grid(row=1, column=1, sticky=tk.W, pady=8)
+
+        ttk.Label(auth_frame, text="WITC FTP Server:").grid(row=2, column=0, sticky=tk.W, pady=8)
+        witc_ftp_server_var = tk.StringVar(value=self.config_manager.get("witc_ftp_server", ""))
+        ttk.Entry(auth_frame, textvariable=witc_ftp_server_var, width=35).grid(row=2, column=1, sticky=tk.W, pady=8)
+
+        ttk.Label(auth_frame, text="WITC FTP Username:").grid(row=3, column=0, sticky=tk.W, pady=8)
+        witc_ftp_username_var = tk.StringVar(value=self.config_manager.get("witc_ftp_username", ""))
+        ttk.Entry(auth_frame, textvariable=witc_ftp_username_var, width=35).grid(row=3, column=1, sticky=tk.W, pady=8)
+
+        ttk.Label(auth_frame, text="WITC FTP Password:").grid(row=4, column=0, sticky=tk.W, pady=8)
+        witc_ftp_password_var = tk.StringVar(value=self.config_manager.get("witc_ftp_password", ""))
+        ttk.Entry(auth_frame, textvariable=witc_ftp_password_var, width=35, show="*").grid(row=4, column=1, sticky=tk.W, pady=8)
+        
+        ttk.Label(urls_frame, text="Source URLs", font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 15))
+        
+        urls = self.config_manager.get("urls", {})
+        ttk.Label(urls_frame, text="Northwest Outdoors:").grid(row=1, column=0, sticky=tk.W, pady=8)
+        northwest_outdoors_url_var = tk.StringVar(value=urls.get("northwest_outdoors", ""))
+        ttk.Entry(urls_frame, textvariable=northwest_outdoors_url_var, width=45).grid(row=1, column=1, sticky=tk.W, pady=8)
+        
+        ttk.Label(urls_frame, text="Whittler:").grid(row=2, column=0, sticky=tk.W, pady=8)
+        whittler_url_var = tk.StringVar(value=urls.get("whittler", ""))
+        ttk.Entry(urls_frame, textvariable=whittler_url_var, width=45).grid(row=2, column=1, sticky=tk.W, pady=8)
         
         def save_settings():
             self.config_manager.set("output_dir", output_dir_var.get())
@@ -470,6 +474,14 @@ class AudioDownloaderGUI:
             self.config_manager.set("retry_attempts", int(retry_var.get()))
             self.config_manager.set("tag_file", tag_var.get())
             self.config_manager.set("cow_password", cow_password_var.get())
+            self.config_manager.set("browser_download_dir", browser_download_dir_var.get())
+            self.config_manager.set("witc_ftp_server", witc_ftp_server_var.get())
+            self.config_manager.set("witc_ftp_username", witc_ftp_username_var.get())
+            self.config_manager.set("witc_ftp_password", witc_ftp_password_var.get())
+            self.config_manager.set("urls", {
+                "northwest_outdoors": northwest_outdoors_url_var.get(),
+                "whittler": whittler_url_var.get(),
+            })
             self.config_manager.save()
             messagebox.showinfo("Settings", "Settings saved successfully!")
             settings_window.destroy()
@@ -481,11 +493,8 @@ class AudioDownloaderGUI:
     
     def on_closing(self):
         """Handle application closing"""
-        if messagebox.askokcancel("Quit", "Do you want to quit? This will close the browser if it's open."):
-            self.scheduler.stop()
-            self.browser_manager.close_browser()
-            self.root.destroy()
-            sys.exit()
+        self.browser_manager.close_browser()
+        self.root.destroy()
     
     def run(self):
         """Start the GUI application"""

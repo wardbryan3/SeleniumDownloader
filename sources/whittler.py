@@ -3,7 +3,7 @@ Whittler download source
 """
 
 import os
-import glob
+
 import zipfile
 import time
 import logging
@@ -76,7 +76,7 @@ class WhittlerDownloader(BaseDownloader):
                     )
                     logger.info(f"Found confirm button with XPath: {xpath}")
                     break
-                except:
+                except Exception:
                     logger.info(f"XPath not found: {xpath}")
             
             if confirm_button:
@@ -114,8 +114,6 @@ class WhittlerDownloader(BaseDownloader):
                 zip_ref.extractall(temp_dir)
                 logger.info(f"Extracted {len(zip_ref.namelist())} files")
             
-            os.remove(downloaded_file)
-            
             if update_callback:
                 update_callback(80, "Moving files to Global Features...")
             
@@ -140,6 +138,7 @@ class WhittlerDownloader(BaseDownloader):
                     shutil.copy(file_path, new_path)
                     logger.info(f"Copied: {file_path.name} -> {new_filename}")
             
+            os.remove(downloaded_file)
             shutil.rmtree(temp_dir, ignore_errors=True)
             
             if update_callback:

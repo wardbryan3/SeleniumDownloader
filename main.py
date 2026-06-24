@@ -42,6 +42,15 @@ def setup_logging(log_to_file=True):
     
     return logger
 
+def _touch_output_dir(config):
+    """Update the output directory's mtime so it appears at the top in Explorer"""
+    output_dir = config.get_output_base_dir()
+    try:
+        os.utime(output_dir)
+    except Exception:
+        pass
+
+
 def run_cli_downloads():
     """Run downloads in CLI mode without GUI"""
     from config import ConfigManager, DOWNLOAD_SOURCES
@@ -105,6 +114,7 @@ def run_cli_downloads():
     logger.info("")
     logger.info(f"Total: {success_count}/{total_count} successful")
     
+    _touch_output_dir(config)
     return all(results.values())
 
 def run_single_source(source_name):
@@ -140,6 +150,7 @@ def run_single_source(source_name):
         return False
     finally:
         browser_manager.close_browser()
+        _touch_output_dir(config)
 
 def main():
     """Main entry point for the application"""
