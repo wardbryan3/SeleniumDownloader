@@ -24,19 +24,14 @@ class BrowserManager:
     def __init__(self, config_manager):
         self.config_manager = config_manager
         self.driver: Optional[webdriver.Firefox] = None
-        self._initialize_download_directory()
+        self._get_temp_download_dir()
     
     def _get_temp_download_dir(self) -> str:
         """Get the dedicated download directory for the browser"""
         download_dir = self.config_manager.get_browser_download_dir()
         Path(download_dir).mkdir(parents=True, exist_ok=True)
         return download_dir
-    
-    def _initialize_download_directory(self):
-        """Ensure download directory exists"""
-        download_dir = self._get_temp_download_dir()
-        Path(download_dir).mkdir(parents=True, exist_ok=True)
-    
+
     def _create_browser_options(self) -> Options:
         """Create and configure browser options"""
         options = Options()
@@ -195,26 +190,6 @@ class BrowserManager:
                         continue
             
             time.sleep(poll_interval)
-        
-        for f in download_dir.iterdir():
-            if f.is_file():
-                try:
-                    size = f.stat().st_size
-                    if size > 0 and f.name not in checked_files:
-                        has_excluded_ext = any(f.name.endswith(ext) for ext in EXCLUDED_EXTENSIONS)
-                        has_excluded_prefix = any(f.name.startswith(prefix) for prefix in EXCLUDED_PREFIXES)
-                        has_allowed_ext = any(f.name.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS)
-                        
-                        if has_excluded_ext or has_excluded_prefix:
-                            logger.debug(f"Ignoring system/temp file: {f.name}")
-                        elif has_allowed_ext:
-                            checked_files.add(f.name)
-                            logger.info(f"Found valid download: {f.name} ({size} bytes)")
-                            return str(f)
-                        else:
-                            logger.debug(f"Ignoring unknown file type: {f.name}")
-                except OSError:
-                    continue
         
         logger.warning(f"Browser download wait timeout after {timeout}s")
         return None

@@ -14,9 +14,9 @@ python test_downloads.py        # Run standalone test suite
 python test_detection_standalone.py  # Run download detection test
 python tests/test_config_edge_cases.py  # Config tests
 python tests/test_integration.py        # Integration tests
-python tests/test_scheduler.py          # Scheduler tests
 python tests/test_sources.py            # URL validation tests
 python tests/test_browser_manager.py    # Browser manager tests
+python tests/test_weekend_in_the_country.py  # WITC rename/promo tests
 ```
 
 No test framework installed — tests are plain Python scripts run directly. No lint/typecheck configured.
@@ -24,11 +24,12 @@ No test framework installed — tests are plain Python scripts run directly. No 
 ## Architecture
 
 - **Entry point**: `main.py` — 3 modes: GUI (tkinter), CLI download-all, CLI single-source
-- **Sources**: `sources/` — 4 downloader implementations using factory via `create_downloader(name, browser_mgr, config)`
+- **Windows batch scripts**: `download_global_features.bat` (Thu 11PM), `download_promos.bat` (Tue 11PM)
+- **Sources**: `sources/` — 6 downloader implementations using factory via `create_downloader(name, browser_mgr, config)`
 - **Base class**: `sources/base.py` — `BaseDownloader` with `download()` abstract method
 - **Browser**: Firefox only (uses `webdriver-manager` for GeckoDriver auto-install)
 - **Config**: `download_config.json` (gitignored, contains credentials) — auto-created with defaults on first run
-- **GUI**: tkinter with dark theme in `gui.py`
+- **GUI**: tkinter dark theme in `gui.py`
 
 ## Key Directories
 
@@ -65,7 +66,6 @@ GitHub Actions (`.github/workflows/windows_build.yml`): builds Windows exe on pu
 - **`cow_password`**: Clear Out West password
 - **`urls`**: Real Dropbox shared links per source (defaults are `YOUR_LINK_HERE` placeholders)
 - **`output_dir`**: Base output directory (defaults to `downloads/`). All source folders are created under this.
-- **`scheduled_downloads`**: Controls automated download timing (enabled, schedule_type, time, days)
 
 To update config programmatically, use `ConfigManager`:
 ```python

@@ -48,7 +48,7 @@ class BaseDownloader(ABC):
                             driver.execute_script("arguments[0].click();", elem)
                             time.sleep(2)
                             return
-                except:
+                except Exception:
                     continue
             
         except Exception as e:
@@ -95,7 +95,7 @@ class BaseDownloader(ABC):
             if f.is_file():
                 try:
                     known_files[f.name] = f.stat().st_size
-                except:
+                except Exception:
                     known_files[f.name] = 0
         logger.info(f"Initial files in directory ({len(known_files)}): {list(known_files.keys())}")
         
@@ -147,7 +147,7 @@ class BaseDownloader(ABC):
                                         else:
                                             logger.info(f"[{elapsed:.1f}s] FILE STILL GROWING: {f.name} ({current_size} -> {new_size})")
                                             known_files[f.name] = new_size
-                                    except:
+                                    except Exception:
                                         pass
                         elif current_size != prev_size and prev_size > 0:
                             if any(f.name.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS):

@@ -2,7 +2,6 @@
 Melinda Myers download source
 """
 
-import os
 import time
 import logging
 import shutil

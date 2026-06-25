@@ -81,41 +81,14 @@ def test_download_detection():
     file1 = DownloadSimulator.create_test_file(test_dir, "test1.mp3", size_kb=10)
     time.sleep(0.5)
     
-    print("\n2. Testing simple_wait_for_download...")
-    result = DownloadUtilities.simple_wait_for_download(
-        test_dir,
-        expected_extensions=['.mp3'],
-        timeout=5
-    )
-    print(f"Result: {result}")
-    
-    print("\n3. Testing monitor_for_download...")
-    test_dir2 = tempfile.mkdtemp(prefix='download_monitor_test_')
-    
-    def create_file_in_background():
-        time.sleep(1)
-        DownloadSimulator.create_test_file(test_dir2, "test2.mp3", size_kb=20)
-    
-    import threading
-    t = threading.Thread(target=create_file_in_background)
-    t.start()
-    
-    result = DownloadUtilities.monitor_for_download(
-        test_dir2,
-        expected_extensions=['.mp3'],
-        timeout=10
-    )
-    t.join()
-    print(f"Result: {result}")
-    
-    print("\n4. Testing find_latest_file...")
+
+    print("\n2. Testing find_latest_file...")
     DownloadSimulator.create_test_file(test_dir, "test3.mp3", size_kb=15)
     time.sleep(1)
     result = DownloadUtilities.find_latest_file(test_dir, extension='.mp3')
     print(f"Result: {result}")
     
     shutil.rmtree(test_dir, ignore_errors=True)
-    shutil.rmtree(test_dir2, ignore_errors=True)
     
     print("\n" + "=" * 50)
     print("All tests completed!")

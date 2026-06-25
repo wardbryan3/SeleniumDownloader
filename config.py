@@ -38,35 +38,21 @@ DEFAULT_CONFIG = {
     "auto_close_browser": True,
     "retry_attempts": 2,
     "cow_password": "",
+    "witc_ftp_server": "",
+    "witc_ftp_username": "",
+    "witc_ftp_password": "",
     "urls": {
         "northwest_outdoors": "https://www.dropbox.com/scl/fo/YOUR_LINK_HERE",
         "whittler": "https://www.dropbox.com/scl/fo/YOUR_LINK_HERE"
-    },
-    "scheduled_downloads": {
-        "enabled": False,
-        "schedule_type": "daily",
-        "time": "06:00",
-        "days": [],
-        "download_all": True,
-        "selected_sources": []
     }
-}
-
-DAY_MAPPING = {
-    "Monday": "Mon",
-    "Tuesday": "Tue",
-    "Wednesday": "Wed",
-    "Thursday": "Thu",
-    "Friday": "Fri",
-    "Saturday": "Sat",
-    "Sunday": "Sun"
 }
 
 DOWNLOAD_SOURCES = {
     "Melinda Myers": "melinda_myers",
     "Northwest Outdoors": "northwest_outdoors",
     "Whittler": "whittler",
-    "Clear Out West": "clear_out_west"
+    "Clear Out West": "clear_out_west",
+    "Weekend In The Country": "weekend_in_the_country"
 }
 
 class ConfigManager:
@@ -102,11 +88,8 @@ class ConfigManager:
             logger.error(f"Could not create config file: {e}")
         return default_config
     
-    def save_config(self, config: Dict[str, Any] = None) -> bool:
+    def save_config(self) -> bool:
         """Save configuration to file"""
-        if config is not None:
-            self.config = config
-        
         try:
             with open(CONFIG_FILE, 'w') as f:
                 json.dump(self.config, f, indent=2)
@@ -170,15 +153,6 @@ class ConfigManager:
         if not isinstance(retry_attempts, int) or retry_attempts < 0:
             errors.append("Retry attempts must be a positive integer")
         
-        scheduled = config.get("scheduled_downloads", {})
-        if scheduled.get("enabled", False):
-            time_str = scheduled.get("time", "")
-            try:
-                from datetime import datetime
-                datetime.strptime(time_str, '%H:%M')
-            except ValueError:
-                errors.append(f"Invalid time format: {time_str}")
-        
         return errors
     
     def get(self, key: str, default: Any = None) -> Any:
@@ -197,10 +171,6 @@ class ConfigManager:
         """Update configuration with new values"""
         self.config.update(updates)
         self.save_config()
-    
-    def get_scheduled_config(self) -> Dict[str, Any]:
-        """Get scheduled downloads configuration"""
-        return self.config.get("scheduled_downloads", {})
     
     def get_global_features_dir(self) -> str:
         """Get the Global Features directory under the output dir"""

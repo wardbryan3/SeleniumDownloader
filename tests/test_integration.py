@@ -35,25 +35,27 @@ class TestDownloadWorkflow:
 
     def test_source_initialization(self):
         """Test that all sources can be initialized"""
-        from sources.base import BaseDownloader
-        from config import ConfigManager
-
-        cm = ConfigManager()
+        from sources import (
+            MelindaMyersDownloader,
+            NorthwestOutdoorsDownloader,
+            NorthwestOutdoorsPromoDownloader,
+            WhittlerDownloader,
+            ClearOutWestDownloader,
+            WeekendInTheCountryDownloader,
+        )
 
         source_classes = [
-            'MelindaMyersDownloader',
-            'NorthwestOutdoorsDownloader',
-            'WhittlerDownloader',
-            'ClearOutWestDownloader',
+            MelindaMyersDownloader,
+            NorthwestOutdoorsDownloader,
+            NorthwestOutdoorsPromoDownloader,
+            WhittlerDownloader,
+            ClearOutWestDownloader,
+            WeekendInTheCountryDownloader,
         ]
 
-        for class_name in source_classes:
-            try:
-                module = __import__(f'sources.{class_name.lower().replace("downloader", "")}', fromlist=[class_name])
-                cls = getattr(module, class_name)
-                print(f"  ✓ {class_name} can be imported")
-            except (ImportError, AttributeError) as e:
-                print(f"  Note: {class_name} - {e}")
+        for cls in source_classes:
+            assert cls is not None, f"Source class import failed"
+            print(f"  ✓ {cls.__name__} can be imported")
 
     def test_downloader_has_required_methods(self):
         """Test BaseDownloader has required methods"""
@@ -61,7 +63,6 @@ class TestDownloadWorkflow:
 
         required_methods = [
             'download',
-            'cleanup',
             'should_auto_close_browser',
         ]
 
@@ -88,7 +89,7 @@ class TestDownloadWorkflow:
 class TestEndToEndScenarios:
     """Test end-to-end scenarios"""
 
-    @patch('sources.base.BaseDownloader.start_browser')
+    @patch('browser_manager.BrowserManager.start_browser')
     def test_northwest_outdoors_workflow(self, mock_start_browser):
         """Test Northwest Outdoors download workflow"""
         mock_start_browser.return_value = True
@@ -98,9 +99,9 @@ class TestEndToEndScenarios:
         from browser_manager import BrowserManager
 
         cm = ConfigManager()
-        bm = BrowserManager()
+        bm = BrowserManager(cm)
 
-        downloader = NorthwestOutdoorsDownloader(cm, bm)
+        downloader = NorthwestOutdoorsDownloader(bm, cm)
 
         url = cm.get("urls", {}).get("northwest_outdoors", "")
         is_valid = bool(url) and "YOUR_LINK" not in url
@@ -108,7 +109,7 @@ class TestEndToEndScenarios:
         assert is_valid, "URL should be valid"
         print(f"  ✓ Northwest Outdoors workflow ready with valid URL")
 
-    @patch('sources.base.BaseDownloader.start_browser')
+    @patch('browser_manager.BrowserManager.start_browser')
     def test_whittler_workflow(self, mock_start_browser):
         """Test Whittler download workflow"""
         mock_start_browser.return_value = True
@@ -118,9 +119,9 @@ class TestEndToEndScenarios:
         from browser_manager import BrowserManager
 
         cm = ConfigManager()
-        bm = BrowserManager()
+        bm = BrowserManager(cm)
 
-        downloader = WhittlerDownloader(cm, bm)
+        downloader = WhittlerDownloader(bm, cm)
 
         url = cm.get("urls", {}).get("whittler", "")
         is_valid = bool(url) and "YOUR_LINK" not in url
@@ -185,6 +186,7 @@ class TestErrorHandling:
     def test_missing_config_file_creates_default(self):
         """Test that missing config file creates default"""
         import tempfile
+        from config import ConfigManager
 
         temp_config = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
         temp_config.close()
@@ -214,6 +216,7 @@ class TestErrorHandling:
     def test_invalid_json_handled(self):
         """Test that invalid JSON is handled gracefully"""
         import tempfile
+        from config import ConfigManager
 
         temp_config = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
         temp_config.write("{ invalid json }")
