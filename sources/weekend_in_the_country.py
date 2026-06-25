@@ -29,12 +29,22 @@ class WeekendInTheCountryDownloader(BaseDownloader):
         if update_callback:
             update_callback(10, "Connecting to FTP server...")
 
-        from ftplib import FTP, error_perm
+        from ftplib import FTP
 
         ftp = FTP()
-        ftp.connect(server, timeout=30)
-        ftp.login(username, password)
-        ftp.encoding = 'utf-8'
+        try:
+            ftp.connect(server, timeout=30)
+            ftp.login(username, password)
+            ftp.encoding = 'utf-8'
+        except Exception as e:
+            logger.error(f"FTP connection/login failed for {server}: {e}")
+            if update_callback:
+                update_callback(100, f"Error: FTP connection/login failed: {e}")
+            try:
+                ftp.close()
+            except Exception:
+                pass
+            return False
 
         logger.info(f"Connected to {server}")
 
