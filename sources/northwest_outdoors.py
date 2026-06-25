@@ -102,9 +102,7 @@ def _download_nwo_zip(downloader, update_callback=None):
         update_callback(60, "Processing download...")
 
     logger.info("Extracting files...")
-    temp_dir = Path(tempfile.gettempdir()) / "nwo_extract"
-    temp_dir.mkdir(exist_ok=True)
-
+    temp_dir = Path(tempfile.mkdtemp(prefix="nwo_extract_"))
     with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
         zip_ref.extractall(temp_dir)
         logger.info(f"Extracted {len(zip_ref.namelist())} files")
