@@ -153,6 +153,7 @@ class NorthwestOutdoorsDownloader(BaseDownloader):
 
             if not found_files:
                 logger.warning("No non-promo files found in download")
+                return False
 
             return True
 
