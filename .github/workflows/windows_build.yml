@@ -42,8 +42,8 @@ jobs:
           else
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            sed -i "s/__version__ = .*/__version__ = \"${{ steps.bump.outputs.new_version }}\"/" __init__.py
-            git add __init__.py
+            sed -i "s/__version__ = .*/__version__ = \"${{ steps.bump.outputs.new_version }}\"/" audio_downloader/__init__.py
+            git add audio_downloader/__init__.py
             git commit -m "chore: bump version to ${{ steps.bump.outputs.new_version }}"
             git tag ${{ steps.bump.outputs.new_version }}
             git push origin ${{ steps.bump.outputs.new_version }}

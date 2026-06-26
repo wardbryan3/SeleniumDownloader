@@ -15,7 +15,7 @@ class TestDownloadWorkflow:
 
     def test_config_manager_workflow(self):
         """Test full ConfigManager workflow"""
-        from config import ConfigManager
+        from audio_downloader.config import ConfigManager
 
         cm = ConfigManager()
 
@@ -35,7 +35,7 @@ class TestDownloadWorkflow:
 
     def test_source_initialization(self):
         """Test that all sources can be initialized"""
-        from sources import (
+        from audio_downloader.sources import (
             MelindaMyersDownloader,
             NorthwestOutdoorsDownloader,
             NorthwestOutdoorsPromoDownloader,
@@ -59,7 +59,7 @@ class TestDownloadWorkflow:
 
     def test_downloader_has_required_methods(self):
         """Test BaseDownloader has required methods"""
-        from sources.base import BaseDownloader
+        from audio_downloader.sources.base import BaseDownloader
 
         required_methods = [
             'download',
@@ -73,7 +73,7 @@ class TestDownloadWorkflow:
 
     def test_promo_tag_workflow(self):
         """Test promo tag overlay workflow"""
-        from config import ConfigManager
+        from audio_downloader.config import ConfigManager
 
         cm = ConfigManager()
 
@@ -89,14 +89,14 @@ class TestDownloadWorkflow:
 class TestEndToEndScenarios:
     """Test end-to-end scenarios"""
 
-    @patch('browser_manager.BrowserManager.start_browser')
+    @patch('audio_downloader.browser_manager.BrowserManager.start_browser')
     def test_northwest_outdoors_workflow(self, mock_start_browser):
         """Test Northwest Outdoors download workflow"""
         mock_start_browser.return_value = True
 
-        from sources.northwest_outdoors import NorthwestOutdoorsDownloader
-        from config import ConfigManager
-        from browser_manager import BrowserManager
+        from audio_downloader.sources.northwest_outdoors import NorthwestOutdoorsDownloader
+        from audio_downloader.config import ConfigManager
+        from audio_downloader.browser_manager import BrowserManager
 
         cm = ConfigManager()
         bm = BrowserManager(cm)
@@ -109,14 +109,14 @@ class TestEndToEndScenarios:
         assert is_valid, "URL should be valid"
         print(f"  ✓ Northwest Outdoors workflow ready with valid URL")
 
-    @patch('browser_manager.BrowserManager.start_browser')
+    @patch('audio_downloader.browser_manager.BrowserManager.start_browser')
     def test_whittler_workflow(self, mock_start_browser):
         """Test Whittler download workflow"""
         mock_start_browser.return_value = True
 
-        from sources.whittler import WhittlerDownloader
-        from config import ConfigManager
-        from browser_manager import BrowserManager
+        from audio_downloader.sources.whittler import WhittlerDownloader
+        from audio_downloader.config import ConfigManager
+        from audio_downloader.browser_manager import BrowserManager
 
         cm = ConfigManager()
         bm = BrowserManager(cm)
@@ -131,7 +131,7 @@ class TestEndToEndScenarios:
 
     def test_output_dir_workflow(self):
         """Test output directory workflow"""
-        from config import ConfigManager
+        from audio_downloader.config import ConfigManager
 
         cm = ConfigManager()
 
@@ -149,7 +149,7 @@ class TestEndToEndScenarios:
 
     def test_validate_config_workflow(self):
         """Test config validation workflow"""
-        from config import ConfigManager
+        from audio_downloader.config import ConfigManager
 
         cm = ConfigManager()
 
@@ -165,7 +165,7 @@ class TestEndToEndScenarios:
 
     def test_browser_download_dir_workflow(self):
         """Test browser download directory workflow"""
-        from config import ConfigManager
+        from audio_downloader.config import ConfigManager
         from pathlib import Path
 
         cm = ConfigManager()
@@ -186,7 +186,7 @@ class TestErrorHandling:
     def test_missing_config_file_creates_default(self):
         """Test that missing config file creates default"""
         import tempfile
-        from config import ConfigManager
+        from audio_downloader.config import ConfigManager
 
         temp_config = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
         temp_config.close()
@@ -195,7 +195,7 @@ class TestErrorHandling:
         original_file = ConfigManager.CONFIG_FILE if hasattr(ConfigManager, 'CONFIG_FILE') else None
 
         try:
-            import config
+            import audio_downloader.config as config
             config.CONFIG_FILE = temp_config.name
 
             if os.path.exists(temp_config.name):
@@ -216,7 +216,7 @@ class TestErrorHandling:
     def test_invalid_json_handled(self):
         """Test that invalid JSON is handled gracefully"""
         import tempfile
-        from config import ConfigManager
+        from audio_downloader.config import ConfigManager
 
         temp_config = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
         temp_config.write("{ invalid json }")

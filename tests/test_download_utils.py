@@ -15,7 +15,7 @@ class TestOverlayPromoWithTag:
 
     def test_missing_promo_file(self):
         """Should return False if promo file doesn't exist"""
-        from download_utils import DownloadUtilities
+        from audio_downloader.download_utils import DownloadUtilities
         result = DownloadUtilities.overlay_promo_with_tag(
             "/nonexistent/promo.mp3", "/nonexistent/tag.wav", "/tmp/output.mp3"
         )
@@ -24,7 +24,7 @@ class TestOverlayPromoWithTag:
 
     def test_missing_tag_file(self):
         """Should return False if tag file doesn't exist"""
-        from download_utils import DownloadUtilities
+        from audio_downloader.download_utils import DownloadUtilities
 
         # Create a fake promo file
         with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as promo:
@@ -42,7 +42,7 @@ class TestOverlayPromoWithTag:
 
     def test_successful_overlay(self):
         """Should return True when FFmpeg succeeds"""
-        from download_utils import DownloadUtilities
+        from audio_downloader.download_utils import DownloadUtilities
 
         # Create fake input files
         with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as promo:
@@ -71,7 +71,7 @@ class TestOverlayPromoWithTag:
                         Path(output_path).write_bytes(b'fake output')
                     return mock_result
 
-                with patch('download_utils.subprocess.run', side_effect=mock_run):
+                with patch('audio_downloader.download_utils.subprocess.run', side_effect=mock_run):
                     result = DownloadUtilities.overlay_promo_with_tag(
                         promo_path, tag_path, output_path, overlap_seconds=10
                     )
@@ -88,7 +88,7 @@ class TestOverlayPromoWithTag:
 
     def test_ffmpeg_failure(self):
         """Should return False when FFmpeg fails"""
-        from download_utils import DownloadUtilities
+        from audio_downloader.download_utils import DownloadUtilities
 
         with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as promo:
             promo.write(b'fake audio')
@@ -108,7 +108,7 @@ class TestOverlayPromoWithTag:
                     mock_result.stderr = 'Some error'
                     return mock_result
 
-                with patch('download_utils.subprocess.run', side_effect=mock_run):
+                with patch('audio_downloader.download_utils.subprocess.run', side_effect=mock_run):
                     result = DownloadUtilities.overlay_promo_with_tag(
                         promo_path, tag_path, output_path, overlap_seconds=10
                     )
@@ -125,7 +125,7 @@ class TestOverlayPromoWithTag:
 
     def test_promo_too_short(self):
         """Should return False if promo is shorter than overlap"""
-        from download_utils import DownloadUtilities
+        from audio_downloader.download_utils import DownloadUtilities
 
         with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as promo:
             promo.write(b'fake audio')

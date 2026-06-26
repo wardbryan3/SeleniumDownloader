@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from config import ConfigManager, DEFAULT_CONFIG
+from audio_downloader.config import ConfigManager, DEFAULT_CONFIG
 
 class TestConfigEdgeCases:
     """Test configuration edge cases"""
@@ -94,11 +94,11 @@ class TestConfigEdgeCases:
         assert "/tmp/custom_output" in base_dir
 
         gf_dir = cm.get_global_features_dir()
-        assert "Global Features" in gf_dir
+        assert "GLOBAL FEATURES" in gf_dir
         assert "/tmp/custom_output" in gf_dir
 
         print(f"  ✓ Output base: {base_dir}")
-        print(f"  ✓ Global Features: {gf_dir}")
+        print(f"  ✓ GLOBAL FEATURES: {gf_dir}")
 
     def test_retry_attempts_validation(self):
         """Test retry_attempts must be valid integer"""

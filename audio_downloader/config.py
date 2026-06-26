@@ -117,6 +117,7 @@ class ConfigManager:
             self.get_output_base_dir(),
             self.get_global_features_dir(),
             self.get_promos_dir(),
+            self.get_spots_dir(),
         ]
         
         for folder in folders:
@@ -138,8 +139,9 @@ class ConfigManager:
         
         folders_to_check = [
             ("Base output", self.get_output_base_dir()),
-            ("Global Features", self.get_global_features_dir()),
+            ("GLOBAL FEATURES", self.get_global_features_dir()),
             ("Promos", self.get_promos_dir()),
+            ("Spots", self.get_spots_dir()),
         ]
         
         for name, folder in folders_to_check:
@@ -174,11 +176,15 @@ class ConfigManager:
     
     def get_global_features_dir(self) -> str:
         """Get the Global Features directory under the output dir"""
-        return self._get_subdir("Global Features")
+        return self._get_subdir("GLOBAL FEATURES")
     
     def get_promos_dir(self) -> str:
         """Get the Promos directory under the output dir"""
         return self._get_subdir("Promos")
+    
+    def get_spots_dir(self) -> str:
+        """Get the Spots directory under the output dir"""
+        return self._get_subdir("Spots")
     
     def get_tag_file(self) -> str:
         """Get the audio tag file path"""

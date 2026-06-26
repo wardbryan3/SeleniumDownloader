@@ -3,6 +3,7 @@ Northwest Outdoors download source
 """
 
 import os
+import re
 import zipfile
 import time
 import logging
@@ -113,7 +114,7 @@ def _download_nwo_zip(downloader, update_callback=None):
 
 
 class NorthwestOutdoorsDownloader(BaseDownloader):
-    """Download Northwest Outdoors non-promo files (Global Features)"""
+    """Download Northwest Outdoors non-promo files (GLOBAL FEATURES)"""
     def download(self, update_callback=None) -> bool:
         logger.info("=== STARTING NORTHWEST OUTDOORS DOWNLOAD ===")
 
@@ -128,12 +129,17 @@ class NorthwestOutdoorsDownloader(BaseDownloader):
             global_features_dir.mkdir(parents=True, exist_ok=True)
 
             found_files = False
+            nwo_date_re = re.compile(r'^NWoutdoors\d{6}\.mp3$', re.IGNORECASE)
             for extracted_file in temp_dir.iterdir():
                 if not extracted_file.is_file():
                     continue
 
                 if 'promo' in extracted_file.name.lower():
                     logger.info(f"Skipping promo file: {extracted_file.name}")
+                    continue
+
+                if nwo_date_re.match(extracted_file.name):
+                    logger.info(f"Skipping date-stamped file: {extracted_file.name}")
                     continue
 
                 found_files = True
@@ -200,7 +206,7 @@ class NorthwestOutdoorsPromoDownloader(BaseDownloader):
                 output_file = promos_dir / extracted_file.name
 
                 if Path(tag_file).exists():
-                    from download_utils import DownloadUtilities
+                    from audio_downloader.download_utils import DownloadUtilities
                     success = DownloadUtilities.overlay_promo_with_tag(
                         str(extracted_file),
                         tag_file,

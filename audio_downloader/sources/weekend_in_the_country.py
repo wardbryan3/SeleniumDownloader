@@ -140,14 +140,17 @@ class WeekendInTheCountryDownloader(BaseDownloader):
             except OSError as e:
                 logger.warning(f"Failed to rename {f.name}: {e}")
 
+        spots_dir = Path(self.config_manager.get_spots_dir())
+        spots_dir.mkdir(parents=True, exist_ok=True)
+
         for f, date_str in promos:
             date_tag = f"_{date_str}" if date_str else ""
-            new_name = f.parent / f"WITC_PROMO{date_tag}.mp3"
+            new_name = spots_dir / f"WITC_PROMO{date_tag}.mp3"
             try:
                 f.rename(new_name)
-                logger.info(f"Renamed promo: {f.name} -> {new_name.name}")
+                logger.info(f"Moved promo: {f.name} -> {new_name}")
             except OSError as e:
-                logger.warning(f"Failed to rename promo {f.name}: {e}")
+                logger.warning(f"Failed to move promo {f.name}: {e}")
 
     def _find_mp3_files(self, ftp, path=""):
         """Recursively find all MP3 files on the FTP server"""

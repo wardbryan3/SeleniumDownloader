@@ -115,7 +115,7 @@ class WhittlerDownloader(BaseDownloader):
                 logger.info(f"Extracted {len(zip_ref.namelist())} files")
             
             if update_callback:
-                update_callback(80, "Moving files to Global Features...")
+                update_callback(80, "Moving files to GLOBAL FEATURES...")
             
             output_dir = Path(self.config_manager.get_global_features_dir())
             output_dir.mkdir(parents=True, exist_ok=True)

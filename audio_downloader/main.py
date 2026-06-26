@@ -13,7 +13,6 @@ import sys
 import logging
 import argparse
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def setup_logging(log_to_file=True):
     """Configure logging for the application"""
@@ -53,9 +52,9 @@ def _touch_output_dir(config):
 
 def run_cli_downloads():
     """Run downloads in CLI mode without GUI"""
-    from config import ConfigManager, DOWNLOAD_SOURCES
-    from browser_manager import BrowserManager
-    from sources import create_downloader
+    from audio_downloader.config import ConfigManager, DOWNLOAD_SOURCES
+    from audio_downloader.browser_manager import BrowserManager
+    from audio_downloader.sources import create_downloader
     
     logger = logging.getLogger("audio_downloader")
     logger.info("=" * 50)
@@ -117,11 +116,39 @@ def run_cli_downloads():
     _touch_output_dir(config)
     return all(results.values())
 
+def run_promo_download():
+    """Download just the Northwest Outdoors promo file"""
+    from audio_downloader.config import ConfigManager
+    from audio_downloader.browser_manager import BrowserManager
+    from audio_downloader.sources import create_downloader
+
+    logger = logging.getLogger("audio_downloader")
+    logger.info("=" * 50)
+    logger.info("DOWNLOADING PROMO")
+    logger.info("=" * 50)
+
+    config = ConfigManager()
+    browser_manager = BrowserManager(config)
+    downloader = create_downloader("Download Promo", browser_manager, config)
+
+    try:
+        success = downloader.download()
+        if success:
+            logger.info("PROMO: SUCCESS")
+        else:
+            logger.error("PROMO: FAILED")
+        return success
+    except Exception as e:
+        logger.error(f"PROMO: ERROR - {e}")
+        return False
+    finally:
+        browser_manager.close_browser()
+
 def run_single_source(source_name):
     """Download from a single source"""
-    from config import ConfigManager, DOWNLOAD_SOURCES
-    from browser_manager import BrowserManager
-    from sources import create_downloader
+    from audio_downloader.config import ConfigManager, DOWNLOAD_SOURCES
+    from audio_downloader.browser_manager import BrowserManager
+    from audio_downloader.sources import create_downloader
     
     logger = logging.getLogger("audio_downloader")
     
@@ -176,10 +203,21 @@ Examples:
         type=str,
         help='Download from a specific source (e.g., "Melinda Myers")'
     )
+
+    parser.add_argument(
+        '--download-promo',
+        action='store_true',
+        help='Download the Northwest Outdoors promo only'
+    )
     
     args = parser.parse_args()
     
-    if args.download_all:
+    if args.download_promo:
+        setup_logging()
+        success = run_promo_download()
+        sys.exit(0 if success else 1)
+    
+    elif args.download_all:
         setup_logging()
         logger = logging.getLogger("audio_downloader")
         success = run_cli_downloads()
@@ -195,7 +233,7 @@ Examples:
         logger = logging.getLogger("audio_downloader")
         
         try:
-            from gui import AudioDownloaderGUI
+            from audio_downloader.gui import AudioDownloaderGUI
             
             logger.info("Starting Audio Download Manager (GUI Mode)")
             app = AudioDownloaderGUI()

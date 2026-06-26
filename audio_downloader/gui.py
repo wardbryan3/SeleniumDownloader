@@ -10,9 +10,9 @@ import logging
 from datetime import datetime
 
 try:
-    from config import ConfigManager, DOWNLOAD_SOURCES
-    from browser_manager import BrowserManager
-    from sources import create_downloader
+    from audio_downloader.config import ConfigManager, DOWNLOAD_SOURCES
+    from audio_downloader.browser_manager import BrowserManager
+    from audio_downloader.sources import create_downloader
 except ImportError as e:
     print(f"Import error in gui.py: {e}")
     raise
@@ -88,7 +88,7 @@ class AudioDownloaderGUI:
         
         all_btn = ttk.Button(
             main_frame,
-            text="Download Global Features",
+            text="Download GLOBAL FEATURES",
             command=self.run_all_downloads,
             width=30
         )

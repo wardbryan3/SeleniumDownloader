@@ -16,7 +16,7 @@ class TestBrowserManager:
     def test_browser_manager_imports(self):
         """Test that browser_manager can be imported"""
         try:
-            import browser_manager
+            import audio_downloader.browser_manager as browser_manager
             assert hasattr(browser_manager, 'BrowserManager'), "Should have BrowserManager class"
             print("  ✓ browser_manager imports successfully")
         except ImportError as e:
@@ -26,7 +26,7 @@ class TestBrowserManager:
     def test_browser_manager_has_required_methods(self):
         """Test BrowserManager has required methods"""
         try:
-            from browser_manager import BrowserManager
+            from audio_downloader.browser_manager import BrowserManager
             required_methods = [
                 'start_browser',
                 'close_browser',
@@ -71,12 +71,12 @@ class TestBrowserManager:
 class TestBrowserStartup:
     """Test browser startup logic"""
 
-    @patch('browser_manager.webdriver.Firefox')
-    @patch('browser_manager.GeckoDriverManager')
+    @patch('audio_downloader.browser_manager.webdriver.Firefox')
+    @patch('audio_downloader.browser_manager.GeckoDriverManager')
     def test_start_firefox_browser(self, mock_driver_manager, mock_firefox):
         """Test Firefox browser startup"""
         try:
-            from browser_manager import BrowserManager
+            from audio_downloader.browser_manager import BrowserManager
 
             mock_driver_manager.return_value.install.return_value = "/path/to/geckodriver"
             mock_firefox.return_value = Mock()
@@ -122,7 +122,7 @@ class TestBrowserCleanup:
     def test_close_browser_method_exists(self):
         """Test close_browser method exists"""
         try:
-            from browser_manager import BrowserManager
+            from audio_downloader.browser_manager import BrowserManager
 
             assert hasattr(BrowserManager, 'close_browser'), "Missing close_browser method"
 

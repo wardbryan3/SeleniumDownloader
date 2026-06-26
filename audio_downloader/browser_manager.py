@@ -14,7 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from webdriver_manager.firefox import GeckoDriverManager
 
-from constants import ALLOWED_EXTENSIONS, EXCLUDED_EXTENSIONS, EXCLUDED_PREFIXES
+from audio_downloader.constants import ALLOWED_EXTENSIONS, EXCLUDED_EXTENSIONS, EXCLUDED_PREFIXES
 
 logger = logging.getLogger(__name__)
 

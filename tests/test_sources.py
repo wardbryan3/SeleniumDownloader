@@ -2,12 +2,13 @@
 Test URL validation logic for all download sources
 """
 
+import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from config import ConfigManager
+from audio_downloader.config import ConfigManager
 
 
 def test_northwest_outdoors_url_validation():
@@ -145,6 +146,37 @@ def test_validation_logic_matches_whittler():
     print("  ✓ Whittler validation logic matches source")
 
 
+def test_northwest_outdoors_date_stamped_file_filter():
+    """NWoutdoors<6digits>.mp3 files should be filtered out after unzip"""
+    pattern = re.compile(r'^NWoutdoors\d{6}\.mp3$', re.IGNORECASE)
+
+    should_match = [
+        "NWoutdoors062776.mp3",
+        "NWoutdoors123456.mp3",
+        "nwoutdoors062776.mp3",
+        "NWOUTDOORS062776.mp3",
+    ]
+    should_not_match = [
+        "NWoutdoors06277.mp3",
+        "NWoutdoors0627766.mp3",
+        "NWoutdoors062776.wav",
+        "NWoutdoorsabcdef.mp3",
+        "something_NWoutdoors062776.mp3",
+        "NWoutdoors062776_promo.mp3",
+        "NWO062776.mp3",
+        "promo_file.mp3",
+        "regular_show.mp3",
+    ]
+
+    for name in should_match:
+        assert pattern.match(name), f"'{name}' should match the date pattern"
+
+    for name in should_not_match:
+        assert not pattern.match(name), f"'{name}' should NOT match the date pattern"
+
+    print("  ✓ NWoutdoors date-stamped file filter works correctly")
+
+
 def run_tests():
     """Run all source URL validation tests"""
     print("=" * 60)
@@ -160,6 +192,7 @@ def run_tests():
         test_url_with_special_characters,
         test_validation_logic_matches_northwest_outdoors,
         test_validation_logic_matches_whittler,
+        test_northwest_outdoors_date_stamped_file_filter,
     ]
 
     passed = 0

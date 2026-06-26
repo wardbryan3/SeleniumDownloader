@@ -3,11 +3,14 @@ Test utilities for simulating downloads and testing detection logic
 """
 
 import os
+import sys
 import time
 import tempfile
 import shutil
 from pathlib import Path
 import logging
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 logger = logging.getLogger(__name__)
 
@@ -66,8 +69,8 @@ class DownloadSimulator:
 
 def test_download_detection():
     """Test the download detection logic"""
-    from download_utils import DownloadUtilities
-    from sources.base import BaseDownloader
+    from audio_downloader.download_utils import DownloadUtilities
+    from audio_downloader.sources.base import BaseDownloader
     
     print("=" * 50)
     print("Testing Download Detection")
@@ -97,7 +100,7 @@ def test_download_detection():
 
 def test_config_paths():
     """Test configuration paths"""
-    from config import ConfigManager
+    from audio_downloader.config import ConfigManager
     
     print("=" * 50)
     print("Testing Configuration Paths")
@@ -106,14 +109,15 @@ def test_config_paths():
     config = ConfigManager()
     
     print(f"\nOutput base: {config.get_output_base_dir()}")
-    print(f"Global Features: {config.get_global_features_dir()}")
+    print(f"GLOBAL FEATURES: {config.get_global_features_dir()}")
     print(f"Promos: {config.get_promos_dir()}")
+    print(f"Spots: {config.get_spots_dir()}")
     print(f"Tag file: {config.get_tag_file()}")
     
     config.ensure_folders()
     
-    for folder in ['Global Features', 'Promos']:
-        path = config.get_global_features_dir().replace('Global Features', folder)
+    for folder in ['GLOBAL FEATURES', 'Promos', 'Spots']:
+        path = config.get_global_features_dir().replace('GLOBAL FEATURES', folder)
         if Path(path).exists():
             print(f"✓ {folder} folder exists")
         else:
@@ -124,8 +128,8 @@ def test_config_paths():
 
 def test_browser_manager():
     """Test browser manager initialization"""
-    from browser_manager import BrowserManager
-    from config import ConfigManager
+    from audio_downloader.browser_manager import BrowserManager
+    from audio_downloader.config import ConfigManager
     
     print("=" * 50)
     print("Testing Browser Manager")
@@ -143,9 +147,9 @@ def test_browser_manager():
 
 def test_all_sources():
     """Test creating all downloader instances"""
-    from sources import create_downloader
-    from browser_manager import BrowserManager
-    from config import ConfigManager, DOWNLOAD_SOURCES
+    from audio_downloader.sources import create_downloader
+    from audio_downloader.browser_manager import BrowserManager
+    from audio_downloader.config import ConfigManager, DOWNLOAD_SOURCES
     
     print("=" * 50)
     print("Testing All Download Sources")

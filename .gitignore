@@ -32,3 +32,6 @@ test_config.py
 # Build artifacts
 build/
 dist/
+
+# Superpowers specs/plans (AI design docs)
+docs/superpowers/
