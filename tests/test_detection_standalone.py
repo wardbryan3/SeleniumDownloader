@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-from sources.base import BaseDownloader
+from audio_downloader.sources.base import BaseDownloader
 
 class MockBrowserManager:
     def __init__(self):
@@ -27,10 +27,13 @@ class MockConfigManager:
         return default
     
     def get_global_features_dir(self):
-        return str(Path.home() / "downloads" / "Global Features")
+        return str(Path.home() / "downloads" / "GLOBAL FEATURES")
     
     def get_promos_dir(self):
         return str(Path.home() / "downloads" / "Promos")
+    
+    def get_spots_dir(self):
+        return str(Path.home() / "downloads" / "Spots")
     
     def get_tag_file(self):
         return str(Path.home() / "downloads" / "Promos" / "tag.wav")
