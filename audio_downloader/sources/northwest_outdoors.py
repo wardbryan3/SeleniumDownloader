@@ -206,7 +206,7 @@ class NorthwestOutdoorsPromoDownloader(BaseDownloader):
                 output_file = promos_dir / extracted_file.name
 
                 if Path(tag_file).exists():
-                    from download_utils import DownloadUtilities
+                    from audio_downloader.download_utils import DownloadUtilities
                     success = DownloadUtilities.overlay_promo_with_tag(
                         str(extracted_file),
                         tag_file,

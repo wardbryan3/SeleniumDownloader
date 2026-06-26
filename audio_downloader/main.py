@@ -13,7 +13,6 @@ import sys
 import logging
 import argparse
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def setup_logging(log_to_file=True):
     """Configure logging for the application"""
@@ -53,9 +52,9 @@ def _touch_output_dir(config):
 
 def run_cli_downloads():
     """Run downloads in CLI mode without GUI"""
-    from config import ConfigManager, DOWNLOAD_SOURCES
-    from browser_manager import BrowserManager
-    from sources import create_downloader
+    from audio_downloader.config import ConfigManager, DOWNLOAD_SOURCES
+    from audio_downloader.browser_manager import BrowserManager
+    from audio_downloader.sources import create_downloader
     
     logger = logging.getLogger("audio_downloader")
     logger.info("=" * 50)
@@ -119,9 +118,9 @@ def run_cli_downloads():
 
 def run_promo_download():
     """Download just the Northwest Outdoors promo file"""
-    from config import ConfigManager
-    from browser_manager import BrowserManager
-    from sources import create_downloader
+    from audio_downloader.config import ConfigManager
+    from audio_downloader.browser_manager import BrowserManager
+    from audio_downloader.sources import create_downloader
 
     logger = logging.getLogger("audio_downloader")
     logger.info("=" * 50)
@@ -147,9 +146,9 @@ def run_promo_download():
 
 def run_single_source(source_name):
     """Download from a single source"""
-    from config import ConfigManager, DOWNLOAD_SOURCES
-    from browser_manager import BrowserManager
-    from sources import create_downloader
+    from audio_downloader.config import ConfigManager, DOWNLOAD_SOURCES
+    from audio_downloader.browser_manager import BrowserManager
+    from audio_downloader.sources import create_downloader
     
     logger = logging.getLogger("audio_downloader")
     
@@ -234,7 +233,7 @@ Examples:
         logger = logging.getLogger("audio_downloader")
         
         try:
-            from gui import AudioDownloaderGUI
+            from audio_downloader.gui import AudioDownloaderGUI
             
             logger.info("Starting Audio Download Manager (GUI Mode)")
             app = AudioDownloaderGUI()

@@ -11,7 +11,7 @@ from pathlib import Path
 
 from selenium.webdriver.common.by import By
 
-from constants import ALLOWED_EXTENSIONS, EXCLUDED_EXTENSIONS, EXCLUDED_PREFIXES
+from audio_downloader.constants import ALLOWED_EXTENSIONS, EXCLUDED_EXTENSIONS, EXCLUDED_PREFIXES
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ class BaseDownloader(ABC):
                     known_files[f.name] = 0
         logger.info(f"Initial files in directory ({len(known_files)}): {list(known_files.keys())}")
         
-        from download_utils import DownloadUtilities
+        from audio_downloader.download_utils import DownloadUtilities
         
         iteration = 0
         while time.time() - start_time < timeout:
