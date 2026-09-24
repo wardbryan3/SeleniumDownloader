@@ -10,30 +10,20 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import ConfigManager
 
 
-def test_northwest_outdoors_url_validation():
-    """Test northwest_outdoors URL validation"""
+def test_northwest_outdoors_default_url_is_safe_placeholder():
+    """Repository defaults must never contain a usable shared URL."""
     cm = ConfigManager()
-    urls_config = cm.get("urls", {})
-
-    url = urls_config.get("northwest_outdoors", "")
-
-    is_invalid = not url or "YOUR_LINK" in url or "REMOVED" in url
-
-    assert not is_invalid, f"URL should be valid: {url}"
-    print(f"  ✓ northwest_outdoors URL: {url}")
+    url = cm.get("urls", {}).get("northwest_outdoors", "")
+    assert not url or "YOUR_LINK" in url or "REMOVED" in url
+    print("  ✓ Northwest Outdoors default URL is a placeholder")
 
 
-def test_whittler_url_validation():
-    """Test whittler URL validation"""
+def test_whittler_default_url_is_safe_placeholder():
+    """Repository defaults must never contain a usable shared URL."""
     cm = ConfigManager()
-    urls_config = cm.get("urls", {})
-
-    url = urls_config.get("whittler", "")
-
-    is_invalid = not url or "YOUR_LINK" in url or "REMOVED" in url
-
-    assert not is_invalid, f"URL should be valid: {url}"
-    print(f"  ✓ whittler URL: {url}")
+    url = cm.get("urls", {}).get("whittler", "")
+    assert not url or "YOUR_LINK" in url or "REMOVED" in url
+    print("  ✓ Whittler default URL is a placeholder")
 
 
 def test_dropbox_url_format():
@@ -152,8 +142,8 @@ def run_tests():
     print("=" * 60)
 
     tests = [
-        test_northwest_outdoors_url_validation,
-        test_whittler_url_validation,
+        test_northwest_outdoors_default_url_is_safe_placeholder,
+        test_whittler_default_url_is_safe_placeholder,
         test_dropbox_url_format,
         test_missing_urls_handled,
         test_partial_urls_config,
@@ -172,8 +162,8 @@ def run_tests():
         except AssertionError as e:
             print(f"  ✗ {test.__name__}: {e}")
             failed += 1
-        except Exception as e:
-            print(f"  ✗ {test.__name__}: {e}")
+        except (OSError, TypeError, ValueError) as error:
+            print(f"  ✗ {test.__name__}: {error}")
             failed += 1
 
     print("=" * 60)

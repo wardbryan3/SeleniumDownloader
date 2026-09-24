@@ -1,0 +1,10 @@
+[Unit]
+Description=Run AgInfo and RODEOSHOW nightly at observed working-job time
+
+[Timer]
+OnCalendar=*-*-* 22:11:00 America/Los_Angeles
+Persistent=true
+Unit=audio-downloader-aginfo.service
+
+[Install]
+WantedBy=timers.target

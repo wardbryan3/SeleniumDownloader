@@ -1,0 +1,14 @@
+[Unit]
+Description=Audio Downloader AgInfo and RODEOSHOW nightly run
+After=network-online.target dropbox.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=audio-downloader
+Group=audio-downloader
+EnvironmentFile=/etc/audio-downloader/audio-downloader.env
+WorkingDirectory=/opt/audio-downloader
+ExecStart=/opt/audio-downloader/venv/bin/python -m audio_downloader aginfo-run
+NoNewPrivileges=true
+PrivateTmp=true

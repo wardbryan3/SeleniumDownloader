@@ -1,0 +1,14 @@
+[Unit]
+Description=Audio Downloader weekly run
+After=network-online.target dropbox.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=audio-downloader
+Group=audio-downloader
+EnvironmentFile=/etc/audio-downloader/audio-downloader.env
+WorkingDirectory=/opt/audio-downloader
+ExecStart=/opt/audio-downloader/venv/bin/python -m audio_downloader weekly-run
+NoNewPrivileges=true
+PrivateTmp=true

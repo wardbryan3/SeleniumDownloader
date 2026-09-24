@@ -1,37 +1,31 @@
-"""
-Configuration management for Audio Download Manager
-"""
+"""Configuration management for Audio Download Manager."""
 
-import os
-import sys
 import json
 import logging
+import os
+import shutil
+import sys
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# Detect if running as frozen executable (PyInstaller) or Python script
-if getattr(sys, 'frozen', False):
-    # Running as compiled executable
+if getattr(sys, "frozen", False):
     APP_DIR = Path(sys.executable).parent
 else:
-    # Running as Python script
     APP_DIR = Path(__file__).parent
 
 CONFIG_FILE = str(APP_DIR / "download_config.json")
 
+
 def get_default_browser_download_dir() -> str:
-    """Get platform-appropriate browser download directory"""
-    project_root = Path(__file__).parent
-    if sys.platform == "win32":
-        return str(project_root / "browser_downloads")
-    else:
-        return str(project_root / "browser_downloads")
+    """Return browser staging directory."""
+    return str(Path(__file__).parent / "browser_downloads")
+
 
 BROWSER_DOWNLOAD_DIR = get_default_browser_download_dir()
 
-DEFAULT_CONFIG = {
+DEFAULT_CONFIG: dict[str, Any] = {
     "output_dir": "downloads",
     "tag_file": "",
     "browser_download_dir": BROWSER_DOWNLOAD_DIR,
@@ -43,8 +37,8 @@ DEFAULT_CONFIG = {
     "witc_ftp_password": "",
     "urls": {
         "northwest_outdoors": "https://www.dropbox.com/scl/fo/YOUR_LINK_HERE",
-        "whittler": "https://www.dropbox.com/scl/fo/YOUR_LINK_HERE"
-    }
+        "whittler": "https://www.dropbox.com/scl/fo/YOUR_LINK_HERE",
+    },
 }
 
 DOWNLOAD_SOURCES = {
@@ -52,166 +46,159 @@ DOWNLOAD_SOURCES = {
     "Northwest Outdoors": "northwest_outdoors",
     "Whittler": "whittler",
     "Clear Out West": "clear_out_west",
-    "Weekend In The Country": "weekend_in_the_country"
+    "Weekend In The Country": "weekend_in_the_country",
 }
 
+
 class ConfigManager:
-    """Manages application configuration"""
-    
-    def __init__(self):
-        self.config = self.load_config()
-    
+    """Manage legacy desktop application configuration."""
+
+    def __init__(self, config_file: str | Path | None = None) -> None:
+        self.config_path = Path(config_file or CONFIG_FILE)
+        self.config = self.load_config(self.config_path)
+
     @staticmethod
-    def load_config() -> Dict[str, Any]:
-        """Load configuration from file or return defaults"""
-        logger.info(f"Loading config from: {CONFIG_FILE}")
+    def load_config(config_file: str | Path = CONFIG_FILE) -> dict[str, Any]:
+        """Load configuration or create a default configuration file."""
+        config_path = Path(config_file)
+        logger.info("Loading config from: %s", config_path)
         try:
-            if os.path.exists(CONFIG_FILE):
-                logger.info("Config file exists, loading...")
-                with open(CONFIG_FILE, 'r') as f:
-                    saved_config = json.load(f)
-                    logger.info(f"Saved config URLs: {saved_config.get('urls', {})}")
-                    merged_config = DEFAULT_CONFIG.copy()
-                    merged_config.update(saved_config)
-                    logger.info("Configuration loaded successfully")
-                    return merged_config
-        except Exception as e:
-            logger.error(f"Error loading config: {e}")
-        
+            if config_path.exists():
+                with config_path.open(encoding="utf-8") as file_handle:
+                    saved_config = json.load(file_handle)
+                if not isinstance(saved_config, dict):
+                    raise ValueError("configuration root must be an object")
+                merged_config = DEFAULT_CONFIG.copy()
+                merged_config.update(saved_config)
+                logger.info("Configuration loaded successfully")
+                return merged_config
+        except (OSError, ValueError, json.JSONDecodeError) as error:
+            logger.error("Error loading config: %s", error)
+
         logger.info("Using default configuration")
         default_config = DEFAULT_CONFIG.copy()
         try:
-            with open(CONFIG_FILE, 'w') as f:
-                json.dump(default_config, f, indent=2)
+            with config_path.open("w", encoding="utf-8") as file_handle:
+                json.dump(default_config, file_handle, indent=2)
             logger.info("Created default configuration file")
-        except Exception as e:
-            logger.error(f"Could not create config file: {e}")
+        except OSError as error:
+            logger.error("Could not create config file: %s", error)
         return default_config
-    
+
     def save_config(self) -> bool:
-        """Save configuration to file"""
+        """Save configuration to file."""
         try:
-            with open(CONFIG_FILE, 'w') as f:
-                json.dump(self.config, f, indent=2)
+            with self.config_path.open("w", encoding="utf-8") as file_handle:
+                json.dump(self.config, file_handle, indent=2)
             logger.info("Configuration saved successfully")
             return True
-        except Exception as e:
-            logger.error(f"Error saving config: {e}")
+        except OSError as error:
+            logger.error("Error saving config: %s", error)
             return False
-    
+
     def get_output_base_dir(self) -> str:
-        """Get base output directory"""
-        output_dir = self.config.get("output_dir", "downloads")
-        p = Path(output_dir)
-        if not p.is_absolute():
-            p = Path.cwd() / p
-        return str(p)
-    
+        """Return configured output base directory."""
+        output_dir = Path(self.config.get("output_dir", "downloads"))
+        if not output_dir.is_absolute():
+            output_dir = Path.cwd() / output_dir
+        return str(output_dir)
+
     def _get_subdir(self, relative_path: str) -> str:
-        """Get a subdirectory under the output directory"""
+        """Return one station directory under output directory."""
         return os.path.join(self.get_output_base_dir(), relative_path)
-    
+
     def ensure_folders(self) -> bool:
-        """Ensure all required output folders exist"""
-        folders = [
+        """Create required station output directories."""
+        for folder in (
             self.get_output_base_dir(),
             self.get_global_features_dir(),
             self.get_promos_dir(),
-        ]
-        
-        for folder in folders:
-            if folder:
-                try:
-                    Path(folder).mkdir(parents=True, exist_ok=True)
-                except Exception as e:
-                    logger.error(f"Could not create folder {folder}: {e}")
-                    return False
+            self.get_nbc_dir(),
+        ):
+            try:
+                Path(folder).mkdir(parents=True, exist_ok=True)
+            except OSError as error:
+                logger.error("Could not create folder %s: %s", folder, error)
+                return False
         return True
-    
-    def validate_config(self) -> List[str]:
-        """Validate configuration and return list of errors"""
-        errors = []
-        config = self.config
-        
-        if not config.get("cow_password"):
+
+    def validate_config(self) -> list[str]:
+        """Validate configuration and return errors."""
+        errors: list[str] = []
+        if not self.config.get("cow_password"):
             errors.append("COW password is required")
-        
-        folders_to_check = [
+
+        for name, folder in (
             ("Base output", self.get_output_base_dir()),
-            ("Global Features", self.get_global_features_dir()),
+            ("GLOBAL FEATURES", self.get_global_features_dir()),
             ("Promos", self.get_promos_dir()),
-        ]
-        
-        for name, folder in folders_to_check:
-            if folder:
-                try:
-                    Path(folder).mkdir(parents=True, exist_ok=True)
-                except Exception as e:
-                    errors.append(f"Cannot create {name} folder: {e}")
-        
-        retry_attempts = config.get("retry_attempts", 2)
+            ("NBC", self.get_nbc_dir()),
+        ):
+            try:
+                Path(folder).mkdir(parents=True, exist_ok=True)
+            except OSError as error:
+                errors.append(f"Cannot create {name} folder: {error}")
+
+        retry_attempts = self.config.get("retry_attempts", 2)
         if not isinstance(retry_attempts, int) or retry_attempts < 0:
-            errors.append("Retry attempts must be a positive integer")
-        
+            errors.append("Retry attempts must be a non-negative integer")
         return errors
-    
+
     def get(self, key: str, default: Any = None) -> Any:
-        """Get a configuration value"""
+        """Return one configuration value."""
         return self.config.get(key, default)
-    
-    def set(self, key: str, value: Any):
-        """Set a single configuration value"""
+
+    def set(self, key: str, value: Any) -> None:
+        """Set one configuration value."""
         self.config[key] = value
-    
+
     def save(self) -> bool:
-        """Save configuration to file (alias for save_config)"""
+        """Save configuration."""
         return self.save_config()
-    
-    def update(self, updates: Dict[str, Any]):
-        """Update configuration with new values"""
+
+    def update(self, updates: dict[str, Any]) -> None:
+        """Update and save configuration."""
         self.config.update(updates)
         self.save_config()
-    
+
     def get_global_features_dir(self) -> str:
-        """Get the Global Features directory under the output dir"""
-        return self._get_subdir("Global Features")
-    
+        """Return station GLOBAL FEATURES directory."""
+        return self._get_subdir("GLOBAL FEATURES")
+
     def get_promos_dir(self) -> str:
-        """Get the Promos directory under the output dir"""
+        """Return station Promos directory."""
         return self._get_subdir("Promos")
-    
+
+    def get_nbc_dir(self) -> str:
+        """Return station NBC directory."""
+        return self._get_subdir("NBC")
+
     def get_tag_file(self) -> str:
-        """Get the audio tag file path"""
-        config_tag_file = self.config.get("tag_file")
-        if config_tag_file:
-            return config_tag_file
-        return os.path.join(self.get_promos_dir(), "NWKORVTAG.wav")
-    
+        """Return audio tag file path."""
+        return self.config.get("tag_file") or os.path.join(
+            self.get_promos_dir(), "NWKORVTAG.wav"
+        )
+
     def get_browser_download_dir(self) -> str:
-        """Get the dedicated browser download directory"""
+        """Return dedicated browser staging directory."""
         return self.config.get("browser_download_dir", BROWSER_DOWNLOAD_DIR)
-    
-    def clear_browser_download_dir(self):
-        """Clear the browser download directory before starting downloads"""
+
+    def clear_browser_download_dir(self) -> None:
+        """Clear browser staging directory before a download run."""
         download_dir = Path(self.get_browser_download_dir())
         download_dir.mkdir(parents=True, exist_ok=True)
-        
-        for f in download_dir.iterdir():
+        for path in download_dir.iterdir():
             try:
-                if f.is_file():
-                    f.unlink()
-                elif f.is_dir():
-                    import shutil
-                    shutil.rmtree(f)
-            except Exception as e:
-                logger.warning(f"Could not delete {f}: {e}")
-    
-    def get_browser_download_files(self) -> set:
-        """Get the set of files currently in browser download directory"""
+                if path.is_file():
+                    path.unlink()
+                elif path.is_dir():
+                    shutil.rmtree(path)
+            except OSError as error:
+                logger.warning("Could not delete %s: %s", path, error)
+
+    def get_browser_download_files(self) -> set[str]:
+        """Return names of files in browser staging directory."""
         download_dir = Path(self.get_browser_download_dir())
-        files = set()
-        if download_dir.exists():
-            for f in download_dir.iterdir():
-                if f.is_file():
-                    files.add(f.name)
-        return files
+        if not download_dir.exists():
+            return set()
+        return {path.name for path in download_dir.iterdir() if path.is_file()}

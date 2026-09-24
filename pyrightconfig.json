@@ -1,0 +1,6 @@
+{
+  "include": ["audio_downloader"],
+  "executionEnvironments": [{"root": "audio_downloader", "extraPaths": ["."]}],
+  "venvPath": ".",
+  "venv": ".venv"
+}

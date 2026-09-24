@@ -105,8 +105,8 @@ Go through each tab below.
 This tab controls where files are saved and how the program behaves.
 
 - **Output Directory** - This is the main folder where all your downloaded
-  audio ends up. Inside this folder, the program creates two sub-folders
-  automatically: one called "Global Features" and one called "Promos" (see
+  audio ends up. Inside this folder, the program creates station sub-folders
+  automatically: `GLOBAL FEATURES`, `Promos`, and `NBC` (see
   [Where Your Files Go](#where-your-files-go) below). You can type a folder
   path here, or click the **Browse** button next to it to pick a folder
   using the normal folder picker. The default is a folder called
@@ -283,7 +283,7 @@ sub-folders automatically:
 
 ```
 Your Output Directory/
-    Global Features/
+    GLOBAL FEATURES/
         MMMON.mp3        (Melinda Myers - Monday)
         MMWED.mp3        (Melinda Myers - Wednesday)
         MMFRI.mp3        (Melinda Myers - Friday)
@@ -302,9 +302,10 @@ Your Output Directory/
         ...the Northwest Outdoors promo file (with tag added)
 ```
 
-- **Global Features** holds all the full show files and regular features.
-- **Promos** holds promo files, including the Northwest Outdoors promo
-  with the tag blended onto the end.
+- **GLOBAL FEATURES** holds all full show files and regular features.
+- **Promos** holds promo files, including Northwest Outdoors promo with tag
+  blended onto end.
+- **NBC** receives TTWN News-247 files when Linux NBC poller is deployed.
 
 The program renames the files automatically so they always have
 consistent, predictable names. You never have to rename anything yourself.

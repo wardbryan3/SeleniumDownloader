@@ -1,0 +1,10 @@
+[Unit]
+Description=Start weekly audio download Sunday 11 PM Pacific
+
+[Timer]
+OnCalendar=Sun *-*-* 23:00:00 America/Los_Angeles
+Persistent=true
+Unit=audio-downloader-weekly.service
+
+[Install]
+WantedBy=timers.target

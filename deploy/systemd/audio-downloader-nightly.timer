@@ -1,0 +1,10 @@
+[Unit]
+Description=Retry unresolved audio sources nightly through Friday
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 23:00:00 America/Los_Angeles
+Persistent=true
+Unit=audio-downloader-nightly.service
+
+[Install]
+WantedBy=timers.target
